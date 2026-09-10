@@ -14,7 +14,6 @@ import ApplyForm from "@/components/sections/ApplyForm";
 import Marketing from "@/components/sections/Marketing";
 import NewsPreview from "@/components/sections/NewsPreview";
 import CtaBanner from "@/components/sections/CtaBanner";
-import Faq from "@/components/sections/Faq";
 
 export const revalidate = 1800;
 
@@ -37,7 +36,6 @@ export default function Home() {
       <Marketing />
       <NewsPreview />
       <CtaBanner />
-      <Faq />
     </main>
   );
 }

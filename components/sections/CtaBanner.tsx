@@ -3,7 +3,7 @@ import Reveal from "../Reveal";
 
 export default function CtaBanner() {
   return (
-    <section className="relative py-[240px] text-white text-center overflow-hidden">
+    <section className="relative py-[200px] text-white text-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center scale-105"
         style={{ backgroundImage: "url(/images/cta-bg.png)" }}

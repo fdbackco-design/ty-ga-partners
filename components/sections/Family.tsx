@@ -2,7 +2,7 @@ import Reveal from "../Reveal";
 
 export default function Family() {
   return (
-    <section className="py-[240px] bg-[var(--accent)] text-white">
+    <section className="py-[200px] bg-[var(--accent)] text-white">
       <div className="wrap grid lg:grid-cols-[5fr_7fr] gap-10 items-center">
         <Reveal>
           <h2 className="text-[40px] md:text-[48px] font-extrabold tracking-[-0.04em] leading-[1.25]">

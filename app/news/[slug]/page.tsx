@@ -16,7 +16,7 @@ export default async function NewsDetailPage({
   if (!item) notFound();
 
   return (
-    <main className="py-16 bg-white min-h-[70vh]">
+    <main className="py-12 bg-white min-h-[70vh]">
       <article className="wrap max-w-3xl">
         <p className="text-sm text-[var(--sub)]">
           <Link href="/">홈</Link> / <Link href="/news">파트너 소식</Link>

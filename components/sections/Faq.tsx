@@ -8,7 +8,7 @@ export default function Faq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-[200px] bg-white">
+    <section id="faq" className="py-[160px] bg-white">
       <div className="wrap max-w-[860px]">
         <Reveal>
           <h2 className="section-title text-center">

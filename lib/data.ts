@@ -5,7 +5,6 @@ export const NAV = [
   { href: "/#earnings", label: "예상 수익" },
   { href: "/#inputcontact", label: "신청하기" },
   { href: "/news", label: "파트너 소식" },
-  { href: "/#faq", label: "자주묻는질문" },
 ] as const;
 
 export const PRODUCTS = [
@@ -99,15 +98,84 @@ export const NEWS = [
 
 export const COMPANY = {
   name: "태양라이프 주식회사",
+  tradeName: "태양라이프",
+  slogan: "고객과 함께하는 또 하나의 가족",
   ceo: "김옥",
+  bizNo: "6138137622",
   jinju: "경상남도 진주시 사들로123번길 42, 라온프라이빗위버, 501호",
   seoul: "서울 영등포구 의사당대로1길 25, 404호",
   phone: "1833-2682",
+  customerCenter: "1588-0393",
   email: "taeyanglife@naver.com",
+  copyright: "Copyright ⓒ 2026 태양라이프 All rights reserved.",
   blog: "https://blog.naver.com/taeyanglife_",
   instagram: "https://www.instagram.com/ty_trip_official/",
   site: "https://ty-life.co.kr/",
 } as const;
+
+export const FOOTER_LEGAL = [
+  { href: "/email-refusal", label: "이메일 무단 수집거부" },
+  { href: "/disclosure-notice", label: "중요정보 고시사항" },
+  { href: "/info-disclosure", label: "정보공개" },
+  { href: "/sangjo-terms", label: "상조이용약관" },
+  { href: "/privacy", label: "개인정보 취급방침" },
+  { href: "/release-request", label: "해촉신청" },
+  { href: "/site-info", label: "홈페이지 정보이용" },
+  { href: "/terms", label: "이용약관" },
+] as const;
+
+export const INFO_DISCLOSURE = [
+  {
+    year: "2025",
+    title: "태양라이프 2025년 외부회계감사보고서",
+    date: "2026-08-04",
+    excerpt: "태양라이프 2025년 외부회계감사보고서",
+    href: "https://ty-life.co.kr/info-disclosure/?bmode=view&idx=172863715",
+  },
+  {
+    year: "2024",
+    title: "태양라이프 2024년 외부회계감사보고서",
+    date: "2026-08-04",
+    excerpt: "태양라이프 2024년 외부회계감사보고서 입니다. 첨부파일을 확인해주세요.",
+    href: "https://ty-life.co.kr/info-disclosure/?bmode=view&idx=172863704",
+  },
+  {
+    year: "2023",
+    title: "태양라이프 2023년 외부회계감사보고서",
+    date: "2026-08-04",
+    excerpt: "태양라이프 2023년 외부회계감사보고서 입니다. 첨부파일을 확인해주세요.",
+    href: "https://ty-life.co.kr/info-disclosure/?bmode=view&idx=172863695",
+  },
+  {
+    year: "2022",
+    title: "태양라이프 2022년 외부회계감사보고서",
+    date: "2026-08-04",
+    excerpt: "태양라이프 2021년 외부회계감사보고서 입니다. 첨부파일을 확인해주세요.",
+    href: "https://ty-life.co.kr/info-disclosure/?bmode=view&idx=172863687",
+  },
+  {
+    year: "2021",
+    title: "태양라이프 2021년 외부회계감사보고서",
+    date: "2026-08-04",
+    excerpt: "태양라이프 2021년 외부회계감사보고서입니다. 첨부파일을 확인해주세요.",
+    href: "https://ty-life.co.kr/info-disclosure/?bmode=view&idx=172863681",
+  },
+] as const;
+
+export const SANGJO_TERMS = [
+  {
+    slug: "cruise",
+    title: "크루즈 여행 이용약관",
+    excerpt:
+      "제 1조 (목적) 이 계약은 태양라이프(주)(이하 ‘회사’라 한다)의 회원으로 가입한 사람이 매월 일정액의 납부 의무를 지고 회사는 크루즈여행서비스를 제공하는 의무를 지는 것을 목적으로 합니다.",
+  },
+  {
+    slug: "funeral",
+    title: "상조 이용약관",
+    excerpt:
+      "제 1조 (목적) 이 계약은 태양라이프 (이하 ‘회사’ 라 한다)의 회원으로 가입한 사람이 매월 일정액의 납부의무를 지고 회사는 가정의례 발생 시 약정된 물품과 서비스를 제공하는 의무를 지는 것을 목적으로 합니다.",
+  },
+] as const;
 
 export const GALLERY = [
   { src: "/images/gallery-landing.png", title: "맞춤 랜딩페이지" },

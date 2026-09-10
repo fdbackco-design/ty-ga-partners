@@ -8,7 +8,7 @@ export default function Earnings() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="earnings" className="py-[200px] bg-white">
+    <section id="earnings" className="py-[160px] bg-white">
       <div className="wrap">
         <Reveal>
           <p className="section-label">예상 수익 계산</p>
