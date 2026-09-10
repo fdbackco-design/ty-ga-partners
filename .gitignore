@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# uploaded resource files
+/public/uploads/resources/**
+!/public/uploads/resources/.gitkeep
+/data/resources.json
+/public/uploads/inquiries/**
+!/public/uploads/inquiries/.gitkeep
+/data/inquiries.json
 
 # vercel
 .vercel

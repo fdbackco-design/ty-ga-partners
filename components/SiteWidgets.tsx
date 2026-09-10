@@ -11,6 +11,10 @@ export default function SiteWidgets() {
   const hideExtras =
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/resources" ||
+    pathname.startsWith("/resources/") ||
+    pathname === "/inquiries" ||
+    pathname.startsWith("/inquiries/") ||
     FOOTER_LEGAL.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   return (

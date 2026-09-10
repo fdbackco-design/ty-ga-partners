@@ -113,10 +113,6 @@ export default function ApplyForm() {
                 />
                 <p className="mt-1 text-xs text-[var(--sub)]">- 없이 숫자만 입력해주세요</p>
               </div>
-              <div>
-                <label htmlFor="code">인플루언서 코드</label>
-                <input id="code" name="code" type="text" />
-              </div>
               <div className="span-2">
                 <label htmlFor="rrnFront">
                   주민등록번호<span className="req">*</span>
@@ -150,10 +146,6 @@ export default function ApplyForm() {
                     ●●●●●●
                   </span>
                 </div>
-              </div>
-              <div className="span-2">
-                <label htmlFor="influencer">인플루언서명</label>
-                <input id="influencer" name="influencer" type="text" />
               </div>
             </div>
             <div className="mt-6">

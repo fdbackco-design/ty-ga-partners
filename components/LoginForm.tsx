@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { safeNextPath } from "@/lib/siteUrl";
 
 export default function LoginForm() {
   const { login } = useAuth();
@@ -22,7 +23,8 @@ export default function LoginForm() {
       setError(result.error);
       return;
     }
-    router.push("/#inputcontact");
+    const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+    router.push(result.admin ? next || "/resources" : next || "/#inputcontact");
   }
 
   return (
