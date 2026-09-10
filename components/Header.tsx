@@ -10,7 +10,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { user, ready, logout } = useAuth();
+  const { user, ready, isAdmin, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -39,7 +39,11 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className={pathname === item.href ? "is-on" : ""}
+              className={
+                item.href.startsWith("/") && !item.href.startsWith("/#") && pathname.startsWith(item.href)
+                  ? "is-on"
+                  : ""
+              }
             >
               {item.label}
             </Link>
@@ -50,7 +54,7 @@ export default function Header() {
           <div className={`header-auth ${ready ? "is-ready" : ""}`}>
             {user ? (
               <>
-                <span className="header-user">{user.name}님</span>
+                <span className="header-user">{isAdmin ? "관리자" : `${user.name}님`}</span>
                 <button type="button" className="header-text-btn" onClick={logout}>
                   로그아웃
                 </button>

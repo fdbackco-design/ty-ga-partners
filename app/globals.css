@@ -256,8 +256,8 @@ input {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 20px;
-  font-size: 15px;
+  gap: 14px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: #333;
@@ -1239,7 +1239,8 @@ input {
 
 .form-card input[type="text"],
 .form-card input[type="password"],
-.form-card input[type="tel"] {
+.form-card input[type="tel"],
+.form-card input[type="file"] {
   width: 100%;
   height: 50px;
   border: 1px solid #e5e5e5;
@@ -1266,6 +1267,12 @@ input {
   outline: none;
   resize: vertical;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-card input[type="file"] {
+  height: auto;
+  padding: 10px 0;
+  border: 0;
 }
 
 .rrn-row {
@@ -1484,6 +1491,211 @@ input {
 .legal-html td {
   border: 1px solid #e6e0d6;
   padding: 8px 10px;
+}
+
+.resource-admin {
+  margin-bottom: 40px;
+}
+
+.resource-empty {
+  margin-top: 32px;
+  color: var(--sub);
+}
+
+.resource-list {
+  margin-top: 28px;
+}
+
+.resource-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.resource-list a {
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+}
+
+.resource-list a:hover strong {
+  color: var(--accent);
+}
+
+.resource-list strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.resource-list em {
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
+  font-style: normal;
+  color: var(--sub);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.resource-list span {
+  display: block;
+  margin-top: 8px;
+  color: #8a8a8a;
+  font-size: 13px;
+}
+
+.resource-delete {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resource-delete:hover {
+  color: #dc3545;
+}
+
+.resource-content {
+  white-space: pre-wrap;
+}
+
+.inquiry-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0 20px;
+}
+
+.inquiry-table-wrap {
+  overflow-x: auto;
+}
+
+.inquiry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.inquiry-table th,
+.inquiry-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #ececec;
+  text-align: left;
+}
+
+.inquiry-table th {
+  color: var(--sub);
+  font-weight: 700;
+  background: #faf8f6;
+}
+
+.inquiry-table .col-no,
+.inquiry-table .col-date,
+.inquiry-table .col-status,
+.inquiry-table .col-author {
+  white-space: nowrap;
+}
+
+.inquiry-table .col-no,
+.inquiry-table .col-status {
+  text-align: center;
+}
+
+.inquiry-table td a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.inquiry-table td a:hover {
+  color: var(--accent);
+}
+
+.inquiry-lock {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f3f1ee;
+  color: #6b6b6b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.inquiry-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f3f1ee;
+  color: #777;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inquiry-badge.is-done {
+  background: rgba(235, 83, 48, 0.12);
+  color: var(--accent);
+}
+
+.inquiry-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 28px 0 8px;
+}
+
+.inquiry-images img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+}
+
+.inquiry-files {
+  margin: 20px 0 8px;
+}
+
+.inquiry-files a {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.inquiry-replies {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid #ececec;
+}
+
+.inquiry-replies h2 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.inquiry-reply {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #faf8f6;
+}
+
+.inquiry-reply-meta {
+  margin-bottom: 8px;
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .legal-doc {

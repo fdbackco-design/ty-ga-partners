@@ -3,8 +3,9 @@ export const NAV = [
   { href: "/#Product", label: "전용 상품" },
   { href: "/#Structure", label: "사업구조" },
   { href: "/#earnings", label: "예상 수익" },
-  { href: "/#inputcontact", label: "신청하기" },
   { href: "/news", label: "파트너 소식" },
+  { href: "/resources", label: "자료실" },
+  { href: "/inquiries", label: "문의 남기기" },
 ] as const;
 
 export const PRODUCTS = [
