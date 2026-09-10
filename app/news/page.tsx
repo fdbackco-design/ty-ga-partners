@@ -9,7 +9,7 @@ export default async function NewsPage() {
   const posts = await getTyLifeNews();
 
   return (
-    <main className="py-16 bg-[#f9f9f9] min-h-[70vh]">
+    <main className="py-12 bg-[#f9f9f9] min-h-[70vh]">
       <div className="wrap">
         <p className="text-sm text-[var(--sub)]">
           <Link href="/">홈</Link> / 파트너 소식

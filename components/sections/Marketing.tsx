@@ -6,7 +6,14 @@ export default function Marketing() {
     <section className="marketing">
       <div className="wrap text-center">
         <Reveal>
-          <h2 className="section-title mt-2">
+          <img
+            className="marketing-logo mix-blend-multiply"
+            src="/images/logo-header-sm.png"
+            alt="TY 1인 GA 파트너스"
+            width={689}
+            height={159}
+          />
+          <h2 className="section-title mt-5">
             TY 파트너스
             <br />
             쉽고 빠르게 시작하세요

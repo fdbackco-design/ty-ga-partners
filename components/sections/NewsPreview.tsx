@@ -7,7 +7,7 @@ export default async function NewsPreview() {
   const posts = await getTyLifeNews(3);
 
   return (
-    <section className="py-[200px] bg-[#f9f9f9]">
+    <section className="py-[160px] bg-[#f9f9f9]">
       <div className="wrap">
         <Reveal>
           <h2 className="section-title text-center">파트너 소식</h2>

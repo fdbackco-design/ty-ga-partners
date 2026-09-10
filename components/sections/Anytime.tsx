@@ -17,7 +17,7 @@ export default function Anytime() {
   ];
 
   return (
-    <section className="py-[200px] bg-white">
+    <section className="py-[160px] bg-white">
       <div className="wrap">
         <Reveal>
           <p className="section-label">언제 • 어디서든</p>

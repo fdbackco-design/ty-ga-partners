@@ -2,7 +2,7 @@ import Reveal from "../Reveal";
 
 export default function Product() {
   return (
-    <section id="Product" className="py-[200px] bg-white">
+    <section id="Product" className="py-[160px] bg-white">
       <div className="wrap text-center">
         <Reveal>
           <p className="section-label">TY-GA파트너스 전용상품 ｜ ALL LIFE CARE</p>

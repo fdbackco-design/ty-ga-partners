@@ -25,7 +25,7 @@ export default function Benefits() {
   ];
 
   return (
-    <section className="pb-[180px] md:pb-[220px] bg-white">
+    <section className="pb-[144px] md:pb-[180px] bg-white">
       <div className="wrap">
         <Reveal>
           <p className="section-label">보험 수익이 불안해요</p>

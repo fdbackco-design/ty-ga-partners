@@ -20,6 +20,21 @@ const COLS = [
   },
 ];
 
+const EMPHASIS = ["전액 지급", "1:1 구조"] as const;
+
+function StructureLine({ text }: { text: string }) {
+  const mark = EMPHASIS.find((item) => text.includes(item));
+  if (!mark) return <p>{text}</p>;
+  const at = text.indexOf(mark);
+  return (
+    <p>
+      {text.slice(0, at)}
+      <strong>{mark}</strong>
+      {text.slice(at + mark.length)}
+    </p>
+  );
+}
+
 export default function Structure() {
   return (
     <section id="Structure" className="structure">
@@ -33,9 +48,9 @@ export default function Structure() {
             <Reveal key={col.title} delay={i * 90}>
               <article className="structure-item">
                 <h3>{col.title}</h3>
-                <div className="structure-card">
+                <div className="structure-body">
                   {col.body.map((line) => (
-                    <p key={line}>{line}</p>
+                    <StructureLine key={line} text={line} />
                   ))}
                 </div>
                 {col.note ? <p className="structure-note">{col.note}</p> : null}

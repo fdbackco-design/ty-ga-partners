@@ -20,7 +20,7 @@ export default function Open() {
   }, []);
 
   return (
-    <section className="py-[200px] bg-[#f6f6f6]">
+    <section className="py-[160px] bg-[#f6f6f6]">
       <div className="wrap grid lg:grid-cols-2 gap-12 items-center">
         <Reveal>
           <p className="section-label">TY- 1인 GA파트너스</p>

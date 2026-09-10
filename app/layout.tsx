@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
+import AuthProvider from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SideQuick from "@/components/SideQuick";
-import FloatingCta from "@/components/FloatingCta";
-import BackToTop from "@/components/BackToTop";
+import SiteWidgets from "@/components/SiteWidgets";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -51,12 +50,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full pb-20 md:pb-8">
-        <Header />
-        {children}
-        <Footer />
-        <SideQuick />
-        <FloatingCta />
-        <BackToTop />
+        <AuthProvider>
+          <Header />
+          {children}
+          <Footer />
+          <SiteWidgets />
+        </AuthProvider>
       </body>
     </html>
   );

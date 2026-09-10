@@ -3,7 +3,7 @@ import Reveal from "../Reveal";
 
 export default function Intro() {
   return (
-    <section id="GA" className="py-[180px] md:py-[220px] bg-white">
+    <section id="GA" className="py-[144px] md:py-[180px] bg-white">
       <div className="wrap grid lg:grid-cols-2 gap-12 items-center">
         <Reveal>
           <p className="text-[24px] font-extrabold tracking-[-0.04em]">보험 계약으로 연결하는</p>

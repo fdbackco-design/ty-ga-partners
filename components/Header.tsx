@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
 import { NAV } from "@/lib/data";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const { user, ready, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -44,7 +46,29 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className={`header-auth ${ready ? "is-ready" : ""}`}>
+            {user ? (
+              <>
+                <span className="header-user">{user.name}님</span>
+                <button type="button" className="header-text-btn" onClick={logout}>
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className={`header-text-btn ${pathname === "/login" ? "is-on" : ""}`}>
+                  로그인
+                </Link>
+                <Link
+                  href="/signup"
+                  className={`header-text-btn header-text-btn-accent ${pathname === "/signup" ? "is-on" : ""}`}
+                >
+                  회원가입
+                </Link>
+              </>
+            )}
+          </div>
           <Link href="/#inputcontact" className="btn-ghost">
             신청하기 →
           </Link>
@@ -77,6 +101,27 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
+            {user ? (
+              <button
+                type="button"
+                className="py-3 font-semibold text-left"
+                onClick={() => {
+                  logout();
+                  setOpen(false);
+                }}
+              >
+                로그아웃
+              </button>
+            ) : (
+              <>
+                <Link href="/login" className="py-3 font-semibold" onClick={() => setOpen(false)}>
+                  로그인
+                </Link>
+                <Link href="/signup" className="py-3 font-semibold" onClick={() => setOpen(false)}>
+                  회원가입
+                </Link>
+              </>
+            )}
             <Link
               href="/#inputcontact"
               className="btn-apply mt-3 h-12"
