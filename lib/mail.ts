@@ -1,13 +1,18 @@
 import nodemailer from "nodemailer";
+import { formatInquiryPhone } from "@/lib/inquiries";
 import { getSiteUrl } from "@/lib/siteUrl";
 
-export const INQUIRY_NOTIFY_EMAIL = process.env.INQUIRY_NOTIFY_EMAIL || "taeyanglife@naver.com";
+export const INQUIRY_NOTIFY_EMAIL =
+  process.env.INQUIRY_NOTIFY_EMAIL ||
+  process.env.LEAD_NOTIFY_TO ||
+  "jasonkim@ty-life.co.kr";
 
 export async function sendInquiryNotice(item: {
   id: string;
   title: string;
   content: string;
   authorName: string;
+  authorPhone?: string;
 }) {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
@@ -16,38 +21,46 @@ export async function sendInquiryNotice(item: {
     return false;
   }
 
-  const host = process.env.SMTP_HOST || "smtp.naver.com";
-  const port = Number(process.env.SMTP_PORT || 465);
   const site = getSiteUrl();
   const link = `${site}/inquiries/${item.id}`;
-  const preview = item.content.replace(/\s+/g, " ").trim().slice(0, 240);
+  const phone = formatInquiryPhone(item.authorPhone || "") || "(전화번호 없음)";
+  const content = item.content.trim() || "(내용 없음)";
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
+  const fromAddress = process.env.MAIL_FROM || user;
 
   const transporter = nodemailer.createTransport({
-    host,
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
     port,
-    secure: port === 465,
+    secure,
     auth: { user, pass },
   });
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || user,
+    from: `"TY파트너스" <${fromAddress}>`,
     to: INQUIRY_NOTIFY_EMAIL,
     subject: `[TY파트너스] 새 문의: ${item.title}`,
     text: [
-      "새 문의가 등록되었습니다.",
+      "문의 게시판에 새 글이 등록되었습니다.",
       "",
-      `작성자: ${item.authorName}`,
+      `이름: ${item.authorName}`,
+      `전화번호: ${phone}`,
       `제목: ${item.title}`,
       "",
-      preview || "(내용 없음)",
+      "문의 내용:",
+      content,
       "",
       `게시판 바로가기: ${link}`,
     ].join("\n"),
     html: `
-      <p>새 문의가 등록되었습니다.</p>
-      <p><strong>작성자</strong> ${escapeHtml(item.authorName)}<br />
-      <strong>제목</strong> ${escapeHtml(item.title)}</p>
-      <p>${escapeHtml(preview || "(내용 없음)")}</p>
+      <p>문의 게시판에 새 글이 등록되었습니다.</p>
+      <p>
+        <strong>이름</strong> ${escapeHtml(item.authorName)}<br />
+        <strong>전화번호</strong> ${escapeHtml(phone)}<br />
+        <strong>제목</strong> ${escapeHtml(item.title)}
+      </p>
+      <p><strong>문의 내용</strong></p>
+      <p>${escapeHtml(content).replace(/\n/g, "<br />")}</p>
       <p><a href="${escapeHtml(link)}">게시판에서 확인하기</a><br />
       ${escapeHtml(link)}</p>
     `,

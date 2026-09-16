@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import type { InquirySummary } from "@/lib/inquiries";
+import { formatInquiryPhone, type InquirySummary } from "@/lib/inquiries";
 
 export default function InquiryBoard() {
-  const { user, ready } = useAuth();
+  const { user, ready, isAdmin } = useAuth();
   const [items, setItems] = useState<InquirySummary[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    if (!ready) return;
+    setLoaded(false);
     void fetch("/api/inquiries", { cache: "no-store" })
       .then((res) => res.json())
       .then((data: { items?: InquirySummary[] }) => {
@@ -18,7 +20,7 @@ export default function InquiryBoard() {
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
-  }, []);
+  }, [ready, isAdmin]);
 
   return (
     <>
@@ -46,6 +48,7 @@ export default function InquiryBoard() {
                 <th className="col-no">번호</th>
                 <th>제목</th>
                 <th className="col-author">작성자</th>
+                {isAdmin ? <th className="col-phone">연락처</th> : null}
                 <th className="col-date">작성일</th>
                 <th className="col-status">답변</th>
               </tr>
@@ -61,6 +64,9 @@ export default function InquiryBoard() {
                     </Link>
                   </td>
                   <td className="col-author">{item.authorName}</td>
+                  {isAdmin ? (
+                    <td className="col-phone">{formatInquiryPhone(item.authorPhone) || "-"}</td>
+                  ) : null}
                   <td className="col-date">{item.createdAt.slice(0, 10)}</td>
                   <td className="col-status">
                     <span className={item.answered ? "inquiry-badge is-done" : "inquiry-badge"}>

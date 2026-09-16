@@ -6,62 +6,6 @@ export type UserProfile = {
   rrnBackFirst: string;
 };
 
-export type StoredUser = UserProfile & {
-  passwordHash: string;
-};
-
-export const USERS_KEY = "tyga.users";
-export const SESSION_KEY = "tyga.session";
-
-export async function hashPassword(password: string) {
-  const data = new TextEncoder().encode(password);
-  const buf = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-export function loadUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as StoredUser[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-export function loadSession(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(SESSION_KEY);
-}
-
-export function saveSession(username: string | null) {
-  if (username) localStorage.setItem(SESSION_KEY, username);
-  else localStorage.removeItem(SESSION_KEY);
-}
-
-export function findUser(username: string) {
-  const key = username.trim().toLowerCase();
-  return loadUsers().find((user) => user.username.toLowerCase() === key) ?? null;
-}
-
-export function toProfile(user: StoredUser): UserProfile {
-  return {
-    username: user.username,
-    name: user.name,
-    phone: user.phone,
-    rrnFront: user.rrnFront,
-    rrnBackFirst: user.rrnBackFirst,
-  };
-}
-
 export function validateUsername(value: string) {
   const username = value.trim();
   if (!username) return "아이디를 입력해 주세요.";

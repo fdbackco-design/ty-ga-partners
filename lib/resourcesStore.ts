@@ -1,7 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import path from "path";
 import { del, list, put } from "@vercel/blob";
-import { type ResourcePost } from "@/lib/resources";
+import { type ResourcePost, encodeResourcePathSegment } from "@/lib/resources";
 
 const INDEX_PATH = path.join(process.cwd(), "data", "resources.json");
 const BLOB_INDEX = "resources/index.json";
@@ -97,7 +97,7 @@ export async function saveLocalFile(id: string, fileName: string, buffer: Buffer
   await mkdir(dir, { recursive: true });
   const filePath = path.join(dir, fileName);
   await writeFile(filePath, buffer);
-  return `/uploads/resources/${id}/${encodeURIComponent(fileName)}`;
+  return `/uploads/resources/${id}/${encodeResourcePathSegment(fileName)}`;
 }
 
 export function usingBlob() {
