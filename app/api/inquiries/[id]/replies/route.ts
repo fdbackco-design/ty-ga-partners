@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminFromCookies } from "@/lib/admin";
+import { parseInquiryReplyContent, toPublicInquiry } from "@/lib/inquiries";
 import { getInquiry, saveInquiry } from "@/lib/inquiriesStore";
+import { getViewer } from "@/lib/viewer";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -17,12 +19,9 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "요청 형식이 올바르지 않습니다." }, { status: 400 });
   }
 
-  const content = String(body.content || "").trim();
-  if (!content) {
-    return NextResponse.json({ error: "답글 내용을 입력해 주세요." }, { status: 400 });
-  }
-  if (content.length > 5000) {
-    return NextResponse.json({ error: "답글은 5,000자 이내로 입력해 주세요." }, { status: 400 });
+  const parsed = parseInquiryReplyContent(body.content);
+  if ("error" in parsed) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const { id } = await context.params;
@@ -33,10 +32,11 @@ export async function POST(request: Request, context: RouteContext) {
     ...item.replies,
     {
       id: crypto.randomUUID(),
-      content,
+      content: parsed.content,
       createdAt: new Date().toISOString(),
     },
   ];
   await saveInquiry(item);
-  return NextResponse.json({ item });
+  const viewer = await getViewer();
+  return NextResponse.json({ item: toPublicInquiry(item, viewer) });
 }
