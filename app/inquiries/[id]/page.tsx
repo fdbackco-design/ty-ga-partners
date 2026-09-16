@@ -7,7 +7,7 @@ export const metadata = {
 export default async function InquiryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
-    <main className="legal-page">
+    <main className="legal-page inquiry-ticket-page">
       <div className="wrap">
         <InquiryDetail id={id} />
       </div>
