@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { list, put } from "@vercel/blob";
-import { type Inquiry } from "@/lib/inquiries";
+import { type Inquiry, normalizeStoredInquiry } from "@/lib/inquiries";
 
 const INDEX_PATH = path.join(process.cwd(), "data", "inquiries.json");
 const BLOB_INDEX = "inquiries/index.json";
@@ -14,7 +14,7 @@ async function readLocal(): Promise<Inquiry[]> {
   try {
     const raw = await readFile(INDEX_PATH, "utf8");
     const parsed = JSON.parse(raw) as Inquiry[];
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeStoredInquiry) : [];
   } catch {
     return [];
   }
@@ -33,7 +33,7 @@ async function readBlob(): Promise<Inquiry[]> {
     const res = await fetch(file.url, { cache: "no-store" });
     if (!res.ok) return [];
     const parsed = (await res.json()) as Inquiry[];
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeStoredInquiry) : [];
   } catch {
     return [];
   }
@@ -60,6 +60,16 @@ export async function getInquiry(id: string) {
 export async function saveInquiry(item: Inquiry) {
   const items = useBlob() ? await readBlob() : await readLocal();
   const next = [item, ...items.filter((row) => row.id !== item.id)];
+  if (useBlob()) await writeBlob(next);
+  else await writeLocal(next);
+  return item;
+}
+
+export async function removeInquiry(id: string) {
+  const items = useBlob() ? await readBlob() : await readLocal();
+  const item = items.find((row) => row.id === id) ?? null;
+  if (!item) return null;
+  const next = items.filter((row) => row.id !== id);
   if (useBlob()) await writeBlob(next);
   else await writeLocal(next);
   return item;

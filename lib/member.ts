@@ -11,13 +11,14 @@ function getSecret() {
 export type MemberSession = {
   username: string;
   name: string;
+  phone: string;
 };
 
 export function createMemberToken(member: MemberSession) {
   const exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
-  const payload = Buffer.from(JSON.stringify({ u: member.username, n: member.name, exp })).toString(
-    "base64url",
-  );
+  const payload = Buffer.from(
+    JSON.stringify({ u: member.username, n: member.name, p: member.phone || "", exp }),
+  ).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(payload).digest("hex");
   return `${payload}.${sig}`;
 }
@@ -34,10 +35,11 @@ export function verifyMemberToken(token: string | undefined): MemberSession | nu
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString()) as {
       u?: string;
       n?: string;
+      p?: string;
       exp?: number;
     };
     if (!parsed.u || !parsed.n || !parsed.exp || parsed.exp < Date.now()) return null;
-    return { username: parsed.u, name: parsed.n };
+    return { username: parsed.u, name: parsed.n, phone: String(parsed.p || "") };
   } catch {
     return null;
   }
@@ -50,4 +52,8 @@ export async function getMemberFromCookies() {
 
 export function memberCookieOptions() {
   return cookieOptions();
+}
+
+export function memberSessionFromUser(user: { username: string; name: string; phone: string }): MemberSession {
+  return { username: user.username, name: user.name, phone: user.phone || "" };
 }

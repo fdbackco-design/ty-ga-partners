@@ -5,7 +5,7 @@ export const NAV = [
   { href: "/#earnings", label: "예상 수익" },
   { href: "/news", label: "파트너 소식" },
   { href: "/resources", label: "자료실" },
-  { href: "/inquiries", label: "문의 남기기" },
+  { href: "/inquiries", label: "문의 게시판" },
 ] as const;
 
 export const PRODUCTS = [

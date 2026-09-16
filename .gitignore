@@ -41,6 +41,9 @@ yarn-error.log*
 /public/uploads/inquiries/**
 !/public/uploads/inquiries/.gitkeep
 /data/inquiries.json
+/data/users.db
+/data/users.db-wal
+/data/users.db-shm
 
 # vercel
 .vercel

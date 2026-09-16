@@ -4,6 +4,7 @@ import {
   MAX_INQUIRY_FILE_BYTES,
   attachmentKind,
   isBlockedFile,
+  normalizeInquiryPhone,
   safeFileName,
   toInquirySummary,
   type Inquiry,
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
   let content = "";
   let secret = false;
   let attachments: InquiryAttachment[] = [];
+  let submittedPhone = "";
 
   try {
     if (contentType.includes("application/json")) {
@@ -81,11 +83,13 @@ export async function POST(request: Request) {
         title?: string;
         content?: string;
         secret?: boolean;
+        authorPhone?: string;
         attachments?: InquiryAttachment[];
       };
       title = String(body.title || "").trim();
       content = String(body.content || "").trim();
       secret = Boolean(body.secret);
+      submittedPhone = normalizeInquiryPhone(String(body.authorPhone || ""));
       attachments = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_INQUIRY_ATTACHMENTS) : [];
       for (const file of attachments) {
         if (file.size > MAX_INQUIRY_FILE_BYTES) {
@@ -100,6 +104,7 @@ export async function POST(request: Request) {
       title = String(form.get("title") || "").trim();
       content = String(form.get("content") || "").trim();
       secret = String(form.get("secret") || "") === "on" || String(form.get("secret") || "") === "true";
+      submittedPhone = normalizeInquiryPhone(String(form.get("authorPhone") || ""));
       const files = [...filesFromForm(form, "images"), ...filesFromForm(form, "files")];
       attachments = await attachmentsFromFiles(id, files);
     }
@@ -125,6 +130,7 @@ export async function POST(request: Request) {
     secret,
     authorUsername: viewer.username,
     authorName: viewer.name,
+    authorPhone: viewer.isAdmin ? "" : viewer.phone || submittedPhone,
     attachments,
     replies: [],
     createdAt: new Date().toISOString(),

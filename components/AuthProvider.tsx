@@ -2,20 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  findUser,
-  hashPassword,
-  loadSession,
-  loadUsers,
-  saveSession,
-  saveUsers,
-  toProfile,
   validateName,
   validatePassword,
   validatePhone,
   validateRrnBackFirst,
   validateRrnFront,
   validateUsername,
-  type StoredUser,
   type UserProfile,
 } from "@/lib/auth";
 
@@ -41,14 +33,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-async function startMemberSession(profile: UserProfile) {
-  await fetch("/api/member/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: profile.username, name: profile.name }),
-  });
-}
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
@@ -80,21 +64,23 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
       } catch {
-        // fall through to local session
+        // continue with member session
+      }
+      try {
+        const res = await fetch("/api/member/me", { cache: "no-store" });
+        const data = (await res.json()) as { user?: UserProfile | null };
+        if (!cancelled && data.user) {
+          setIsAdmin(false);
+          setUser(data.user);
+          setReady(true);
+          return;
+        }
+      } catch {
+        // not signed in
       }
       if (cancelled) return;
-      const username = loadSession();
-      if (username) {
-        const stored = findUser(username);
-        if (stored) {
-          const profile = toProfile(stored);
-          setUser(profile);
-          await startMemberSession(profile);
-        } else {
-          saveSession(null);
-        }
-      }
       setIsAdmin(false);
+      setUser(null);
       setReady(true);
     })();
     return () => {
@@ -118,23 +104,18 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     if (rrnFrontError) return { ok: false, error: rrnFrontError };
     const rrnBackError = validateRrnBackFirst(input.rrnBackFirst);
     if (rrnBackError) return { ok: false, error: rrnBackError };
-    if (findUser(input.username)) {
-      return { ok: false, error: "이미 사용 중인 아이디입니다." };
-    }
 
-    const next: StoredUser = {
-      username: input.username.trim(),
-      passwordHash: await hashPassword(input.password),
-      name: input.name.trim(),
-      phone: input.phone.replace(/\D/g, ""),
-      rrnFront: input.rrnFront,
-      rrnBackFirst: input.rrnBackFirst,
-    };
-    saveUsers([...loadUsers(), next]);
-    saveSession(next.username);
-    const profile = toProfile(next);
-    setUser(profile);
-    await startMemberSession(profile);
+    const res = await fetch("/api/member/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const data = (await res.json()) as { error?: string; user?: UserProfile };
+    if (!res.ok || !data.user) {
+      return { ok: false, error: data.error || "회원가입에 실패했습니다." };
+    }
+    setIsAdmin(false);
+    setUser(data.user);
     return { ok: true };
   }, []);
 
@@ -162,22 +143,21 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       // continue with member login
     }
 
-    const stored = findUser(username);
-    if (!stored) return { ok: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." };
-    const passwordHash = await hashPassword(password);
-    if (stored.passwordHash !== passwordHash) {
-      return { ok: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." };
+    const res = await fetch("/api/member/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = (await res.json()) as { error?: string; user?: UserProfile };
+    if (!res.ok || !data.user) {
+      return { ok: false, error: data.error || "아이디 또는 비밀번호가 올바르지 않습니다." };
     }
-    saveSession(stored.username);
     setIsAdmin(false);
-    const profile = toProfile(stored);
-    setUser(profile);
-    await startMemberSession(profile);
+    setUser(data.user);
     return { ok: true, admin: false };
   }, []);
 
   const logout = useCallback(() => {
-    saveSession(null);
     setUser(null);
     setIsAdmin(false);
     void fetch("/api/admin/logout", { method: "POST" });

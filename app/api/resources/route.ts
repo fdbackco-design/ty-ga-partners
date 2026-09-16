@@ -16,16 +16,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "관리자만 자료를 등록할 수 있습니다." }, { status: 401 });
   }
 
-  if (process.env.VERCEL && !usingBlob()) {
-    return NextResponse.json(
-      {
-        error:
-          "Vercel에서는 Blob 스토어를 연결해야 50MB 파일을 저장할 수 있습니다. 프로젝트에 Vercel Blob을 추가해 주세요.",
-      },
-      { status: 503 },
-    );
-  }
-
   const contentType = request.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
@@ -38,14 +28,24 @@ export async function POST(request: Request) {
     };
     const title = String(body.title || "").trim();
     const content = String(body.content || "").trim();
-    const fileName = safeFileName(String(body.fileName || ""));
     const fileUrl = String(body.fileUrl || "").trim();
-    const fileSize = Number(body.fileSize || 0);
-    if (!title || !content || !fileUrl) {
-      return NextResponse.json({ error: "제목, 내용, 파일을 모두 등록해 주세요." }, { status: 400 });
+    const hasFile = Boolean(fileUrl);
+    const fileName = hasFile ? safeFileName(String(body.fileName || "")) : "";
+    const fileSize = hasFile ? Number(body.fileSize || 0) : 0;
+    if (!title || !content) {
+      return NextResponse.json({ error: "제목과 내용을 입력해 주세요." }, { status: 400 });
     }
-    if (fileSize > MAX_FILE_BYTES) {
+    if (hasFile && fileSize > MAX_FILE_BYTES) {
       return NextResponse.json({ error: "파일은 50MB까지 업로드할 수 있습니다." }, { status: 400 });
+    }
+    if (hasFile && process.env.VERCEL && !usingBlob()) {
+      return NextResponse.json(
+        {
+          error:
+            "Vercel에서는 Blob 스토어를 연결해야 50MB 파일을 저장할 수 있습니다. 프로젝트에 Vercel Blob을 추가해 주세요.",
+        },
+        { status: 503 },
+      );
     }
     const item = await saveResource({
       id: crypto.randomUUID(),
@@ -59,35 +59,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ item });
   }
 
-  if (usingBlob() && process.env.VERCEL) {
+  const form = await request.formData();
+  const title = String(form.get("title") || "").trim();
+  const content = String(form.get("content") || "").trim();
+  const file = form.get("file");
+  if (!title || !content) {
+    return NextResponse.json({ error: "제목과 내용을 입력해 주세요." }, { status: 400 });
+  }
+  const attached = file instanceof File && file.size > 0;
+  if (attached && file.size > MAX_FILE_BYTES) {
+    return NextResponse.json({ error: "파일은 50MB까지 업로드할 수 있습니다." }, { status: 400 });
+  }
+  if (attached && process.env.VERCEL && !usingBlob()) {
+    return NextResponse.json(
+      {
+        error:
+          "Vercel에서는 Blob 스토어를 연결해야 50MB 파일을 저장할 수 있습니다. 프로젝트에 Vercel Blob을 추가해 주세요.",
+      },
+      { status: 503 },
+    );
+  }
+  if (attached && usingBlob() && process.env.VERCEL) {
     return NextResponse.json(
       { error: "50MB 파일은 Vercel Blob 업로드를 사용해 주세요." },
       { status: 400 },
     );
   }
 
-  const form = await request.formData();
-  const title = String(form.get("title") || "").trim();
-  const content = String(form.get("content") || "").trim();
-  const file = form.get("file");
-  if (!title || !content || !(file instanceof File)) {
-    return NextResponse.json({ error: "제목, 내용, 파일을 모두 등록해 주세요." }, { status: 400 });
-  }
-  if (file.size > MAX_FILE_BYTES) {
-    return NextResponse.json({ error: "파일은 50MB까지 업로드할 수 있습니다." }, { status: 400 });
-  }
-
   const id = crypto.randomUUID();
-  const fileName = safeFileName(file.name);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const fileUrl = await saveLocalFile(id, fileName, buffer);
+  const fileName = attached ? safeFileName(file.name) : "";
+  const fileUrl = attached ? await saveLocalFile(id, fileName, Buffer.from(await file.arrayBuffer())) : "";
   const item = await saveResource({
     id,
     title,
     content,
     fileName,
     fileUrl,
-    fileSize: file.size,
+    fileSize: attached ? file.size : 0,
     createdAt: new Date().toISOString(),
   });
   return NextResponse.json({ item });
