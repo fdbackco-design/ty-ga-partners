@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly } from "@/lib/auth";
+import { safeNextPath } from "@/lib/siteUrl";
 
 export default function SignupForm() {
   const { signup } = useAuth();
@@ -34,7 +35,8 @@ export default function SignupForm() {
       setError(result.error);
       return;
     }
-    router.push("/#inputcontact");
+    const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+    router.push(next || "/#inputcontact");
   }
 
   return (

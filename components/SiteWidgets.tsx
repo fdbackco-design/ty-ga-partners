@@ -15,6 +15,7 @@ export default function SiteWidgets() {
     pathname.startsWith("/resources/") ||
     pathname === "/inquiries" ||
     pathname.startsWith("/inquiries/") ||
+    pathname.startsWith("/partners") ||
     FOOTER_LEGAL.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   return (

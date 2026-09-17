@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { ApplicationAuditLogRow, PartnerApplicationRow } from "@/lib/partnerApplication";
 
 export type UserRow = {
   id: string;
@@ -29,6 +30,45 @@ type Database = {
           created_at?: string;
         };
         Update: Partial<UserRow>;
+        Relationships: [];
+      };
+      partner_applications: {
+        Row: PartnerApplicationRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          status?: string;
+          channel_slug: string;
+          org_code: string;
+          join_channel: string;
+          cert_name?: string | null;
+          cert_birthdate?: string | null;
+          cert_mobile?: string | null;
+          cert_gender?: number | null;
+          cert_national?: string | null;
+          cert_di?: string | null;
+          cert_response_no?: string | null;
+          cert_at?: string | null;
+          ssn_gender_code?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<PartnerApplicationRow>;
+        Relationships: [];
+      };
+      application_audit_logs: {
+        Row: ApplicationAuditLogRow;
+        Insert: {
+          id?: string;
+          application_id?: string | null;
+          user_id?: string | null;
+          event: string;
+          meta?: Record<string, unknown>;
+          ip?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<ApplicationAuditLogRow>;
         Relationships: [];
       };
     };
