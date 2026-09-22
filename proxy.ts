@@ -9,7 +9,7 @@ const channelCookieOptions = {
   maxAge: 60 * 60 * 24 * 30,
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const response = NextResponse.next();
   const requested = request.nextUrl.searchParams.get("ch");
   const existing = request.cookies.get(CHANNEL_COOKIE)?.value;

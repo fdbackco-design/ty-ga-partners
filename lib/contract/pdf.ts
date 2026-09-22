@@ -98,9 +98,11 @@ function sha256(bytes: Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function resolveFontkit(mod: { create?: unknown; default?: { create?: unknown } }) {
-  if (typeof mod.create === "function") return mod;
-  if (mod.default && typeof mod.default.create === "function") return mod.default;
+type PdfFontkit = Parameters<PDFDocument["registerFontkit"]>[0];
+
+function resolveFontkit(mod: { create?: unknown; default?: { create?: unknown } }): PdfFontkit {
+  if (typeof mod.create === "function") return mod as PdfFontkit;
+  if (mod.default && typeof mod.default.create === "function") return mod.default as PdfFontkit;
   throw new Error("fontkit을 불러오지 못했습니다.");
 }
 
