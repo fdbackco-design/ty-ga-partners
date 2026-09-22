@@ -1,17 +1,25 @@
 import PartnerApplyShell from "@/components/partners/PartnerApplyShell";
+import IssueComplete from "@/components/partners/IssueComplete";
+import { getApplicationByUserId } from "@/lib/partnerApplicationsStore";
 import { requireMemberUser } from "@/lib/partnerAccess";
+import { isCompleteFlowStatus, publicIssueView } from "@/lib/partnerApplication";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "코드 발급 완료 | TY파트너스 공식인증센터",
+  title: "코드 발급 | TY파트너스 공식인증센터",
 };
 
 export default async function PartnersCompletePage() {
-  await requireMemberUser("/partners/apply/complete");
+  const user = await requireMemberUser("/partners/apply/complete");
+  const application = await getApplicationByUserId(user.id);
+  if (!application || !isCompleteFlowStatus(application.status, application.signedAt)) {
+    redirect("/partners/apply");
+  }
   return (
     <PartnerApplyShell step={3} title="코드 발급">
-      <p className="partner-apply-lead">이미 코드가 발급된 계정입니다. 추가 신청을 진행할 수 없습니다.</p>
+      <IssueComplete initial={publicIssueView(application, user.username, user.rrnFront)} />
     </PartnerApplyShell>
   );
 }

@@ -1,15 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Reveal from "../Reveal";
 import PrivacyPolicyBox from "../PrivacyPolicyBox";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly } from "@/lib/auth";
 
+const APPLY_NEXT = "/partners/apply";
+
 export default function ApplyForm() {
   const { user, ready } = useAuth();
-  const [ok, setOk] = useState(false);
+  const router = useRouter();
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [rrnFront, setRrnFront] = useState("");
@@ -32,12 +36,18 @@ export default function ApplyForm() {
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!ready || pending) return;
+
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(APPLY_NEXT)}`);
+      return;
+    }
+
     const data = new FormData(e.currentTarget);
-    const email = String(data.get("email") || "").trim();
     const agree = data.get("agree");
 
-    if (!name.trim() || !email || !phone) {
-      setError("이름, 이메일, 전화번호를 입력해 주세요.");
+    if (!name.trim() || !phone) {
+      setError("이름과 전화번호를 입력해 주세요.");
       return;
     }
     if (!/^\d{6}$/.test(rrnFront) || !/^[1-8]$/.test(rrnBackFirst)) {
@@ -49,19 +59,8 @@ export default function ApplyForm() {
       return;
     }
     setError("");
-    setOk(true);
-    e.currentTarget.reset();
-    if (user) {
-      setName(user.name);
-      setPhone(user.phone);
-      setRrnFront(user.rrnFront);
-      setRrnBackFirst(user.rrnBackFirst);
-    } else {
-      setName("");
-      setPhone("");
-      setRrnFront("");
-      setRrnBackFirst("");
-    }
+    setPending(true);
+    router.push(APPLY_NEXT);
   }
 
   return (
@@ -78,7 +77,11 @@ export default function ApplyForm() {
               <p className="mb-5 text-sm text-[var(--sub)]">
                 로그인 정보로 이름, 전화번호, 주민등록번호가 자동 입력되었습니다.
               </p>
-            ) : null}
+            ) : (
+              <p className="mb-5 text-sm text-[var(--sub)]">
+                신청하려면 로그인이 필요합니다. 회원이 아니라면 회원가입 후 본인인증과 위촉계약서 작성으로 이어집니다.
+              </p>
+            )}
             <div className="form-grid">
               <div>
                 <label htmlFor="name">
@@ -92,12 +95,6 @@ export default function ApplyForm() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-              </div>
-              <div>
-                <label htmlFor="email">
-                  이메일<span className="req">*</span>
-                </label>
-                <input id="email" name="email" type="text" placeholder="example@naver.com" />
               </div>
               <div>
                 <label htmlFor="phone">
@@ -166,23 +163,12 @@ export default function ApplyForm() {
               </label>
             </div>
             {error ? <p className="mt-4 text-sm text-[#dc3545]">{error}</p> : null}
-            <button type="submit" className="btn-apply w-full mt-7 h-[56px] text-[18px]">
-              리워드 2배 받고 신청하기
+            <button type="submit" className="btn-apply w-full mt-7 h-[56px] text-[18px]" disabled={!ready || pending}>
+              {pending ? "이동 중..." : "리워드 2배 받고 신청하기"}
             </button>
           </form>
         </Reveal>
       </div>
-
-      {ok ? (
-        <div className="modal" onClick={() => setOk(false)}>
-          <div className="bg-white rounded-2xl px-10 py-8 text-center" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold">정상적으로 접수되었습니다</p>
-            <button type="button" className="btn-apply mt-6" onClick={() => setOk(false)}>
-              확인
-            </button>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { getSignedInMemberUser, readChannelFromCookies } from "@/lib/partnerAcce
 import {
   countCertAttempts,
   ensureDraftApplication,
-  getApplicationByDi,
+  getIssuedApplicationByDi,
   markApplicationFailed,
   saveVerifiedApplication,
   writeAuditLog,
@@ -124,9 +124,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "회원가입 정보와 본인인증 정보가 일치하지 않습니다." }, { status: 400 });
     }
 
-    const duplicate = await getApplicationByDi(payload.di);
-    if (duplicate && duplicate.userId !== user.id) {
-      await markApplicationFailed(application.id);
+    const issued = await getIssuedApplicationByDi(payload.di);
+    if (issued) {
+      if (issued.userId !== user.id) {
+        await markApplicationFailed(application.id);
+      }
       await writeAuditLog({
         applicationId: application.id,
         userId: user.id,
@@ -138,7 +140,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "이미 코드가 발급된 분입니다" }, { status: 409 });
     }
 
-    const saved = await saveVerifiedApplication(application.id, {
+    const saved = await saveVerifiedApplication(application, {
       certName: payload.name.trim(),
       certBirthdate: payload.birthdate,
       certMobile: mobile,

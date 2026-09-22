@@ -25,3 +25,11 @@ export function birthdateFromRrn(rrnFront: string, rrnBackFirst: string): string
   const century = RRN_CENTURY[rrnBackFirst] ?? "20";
   return `${century}${rrnFront}`;
 }
+
+/**
+ * TY 전산에는 주민번호 뒤 1자리(성별코드)만 전송하고 나머지는 0으로 채운다.
+ * 계약서 PDF에는 뒤 7자리 전체가 인쇄된다 — 규칙이 서로 다르니 혼동 금지.
+ */
+export function toApiSsn2(genderCode: string): string {
+  return genderCode.padEnd(7, "0");
+}

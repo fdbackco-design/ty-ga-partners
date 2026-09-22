@@ -1,20 +1,26 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import ApplyFooterShift from "@/components/partners/ApplyFooterShift";
 
 export default function PartnerApplyShell({
   step,
+  of = 3,
   title,
   backHref,
+  className,
   children,
 }: {
-  step: 1 | 2 | 3;
+  step: number;
+  of?: number;
   title: string;
   backHref?: string;
+  className?: string;
   children: ReactNode;
 }) {
-  const percent = Math.round((step / 3) * 100);
+  const percent = Math.round((step / of) * 100);
   return (
-    <main className="partner-apply">
+    <main className={`partner-apply${className ? ` ${className}` : ""}`}>
+      <ApplyFooterShift />
       <div className="partner-apply-col">
         <div className="partner-apply-head">
           {backHref ? (
@@ -26,7 +32,7 @@ export default function PartnerApplyShell({
           )}
           <h1>{title}</h1>
           <span className="partner-apply-step">
-            {step}/3
+            {step}/{of}
           </span>
         </div>
         <div className="partner-apply-progress" aria-hidden="true">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly } from "@/lib/auth";
@@ -10,6 +10,8 @@ import { safeNextPath } from "@/lib/siteUrl";
 export default function SignupForm() {
   const { signup } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNextPath(searchParams.get("next"));
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [rrnFront, setRrnFront] = useState("");
@@ -35,7 +37,6 @@ export default function SignupForm() {
       setError(result.error);
       return;
     }
-    const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
     router.push(next || "/#inputcontact");
   }
 
@@ -141,7 +142,7 @@ export default function SignupForm() {
       </button>
       <p className="mt-5 text-center text-sm text-[var(--sub)]">
         이미 계정이 있으신가요?{" "}
-        <Link href="/login" className="auth-inline-link">
+        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="auth-inline-link">
           로그인
         </Link>
       </p>

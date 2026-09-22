@@ -1,5 +1,7 @@
 import ApplyEntry from "@/components/partners/ApplyEntry";
+import { isResumable } from "@/lib/partnerApplicationsStore";
 import { requireApplyAccess } from "@/lib/partnerAccess";
+import { getVerifySessionFromCookies } from "@/lib/partnerVerifyToken";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,11 @@ export default async function PartnersApplyPage({
   searchParams: Promise<{ ch?: string }>;
 }) {
   const { ch } = await searchParams;
-  await requireApplyAccess(ch ? `/partners/apply?ch=${encodeURIComponent(ch)}` : "/partners/apply", ch);
-  return <ApplyEntry />;
+  const { user, application } = await requireApplyAccess(
+    ch ? `/partners/apply?ch=${encodeURIComponent(ch)}` : "/partners/apply",
+    ch,
+  );
+  const verify = await getVerifySessionFromCookies();
+  const tokenOk = Boolean(verify && verify.userId === user.id && verify.applicationId === application.id);
+  return <ApplyEntry resume={isResumable(application)} needRecert={isResumable(application) && !tokenOk} />;
 }

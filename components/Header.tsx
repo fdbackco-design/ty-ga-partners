@@ -55,6 +55,11 @@ export default function Header() {
             {user ? (
               <>
                 <span className="header-user">{isAdmin ? "관리자" : `${user.name}님`}</span>
+                {isAdmin ? (
+                  <Link href="/admin/partners" className={`header-text-btn ${pathname.startsWith("/admin/partners") ? "is-on" : ""}`}>
+                    신청관리
+                  </Link>
+                ) : null}
                 <button type="button" className="header-text-btn" onClick={logout}>
                   로그아웃
                 </button>
@@ -106,7 +111,13 @@ export default function Header() {
               </Link>
             ))}
             {user ? (
-              <button
+              <>
+                {isAdmin ? (
+                  <Link href="/admin/partners" className="py-3 font-semibold" onClick={() => setOpen(false)}>
+                    신청관리
+                  </Link>
+                ) : null}
+                <button
                 type="button"
                 className="py-3 font-semibold text-left"
                 onClick={() => {
@@ -116,6 +127,7 @@ export default function Header() {
               >
                 로그아웃
               </button>
+              </>
             ) : (
               <>
                 <Link href="/login" className="py-3 font-semibold" onClick={() => setOpen(false)}>

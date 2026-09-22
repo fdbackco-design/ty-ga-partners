@@ -1,8 +1,10 @@
 import { JOIN_CHANNEL_MAX, type Channel } from "@/config/channels";
 import {
+  statusAfterCertUpdate,
   toApplication,
   type AuditEvent,
   type PartnerApplication,
+  type PartnerApplicationStatus,
 } from "@/lib/partnerApplication";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
@@ -15,9 +17,14 @@ export async function getApplicationByUserId(userId: string): Promise<PartnerApp
   return data ? toApplication(data) : null;
 }
 
-export async function getApplicationByDi(di: string): Promise<PartnerApplication | null> {
+export async function getIssuedApplicationByDi(di: string): Promise<PartnerApplication | null> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase.from("partner_applications").select("*").eq("cert_di", di).maybeSingle();
+  const { data, error } = await supabase
+    .from("partner_applications")
+    .select("*")
+    .eq("cert_di", di)
+    .eq("status", "ISSUED")
+    .maybeSingle();
   if (error) throw new Error(error.message);
   return data ? toApplication(data) : null;
 }
@@ -51,7 +58,7 @@ export async function ensureDraftApplication(userId: string, channel: Channel): 
 }
 
 export async function saveVerifiedApplication(
-  id: string,
+  application: PartnerApplication,
   input: {
     certName: string;
     certBirthdate: string;
@@ -67,7 +74,7 @@ export async function saveVerifiedApplication(
   const { data, error } = await supabase
     .from("partner_applications")
     .update({
-      status: "VERIFIED",
+      status: statusAfterCertUpdate(application.status),
       cert_name: input.certName,
       cert_birthdate: input.certBirthdate,
       cert_mobile: input.certMobile,
@@ -79,7 +86,7 @@ export async function saveVerifiedApplication(
       ssn_gender_code: input.ssnGenderCode,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id)
+    .eq("id", application.id)
     .select("*")
     .single();
   if (error) {
@@ -135,6 +142,142 @@ export function isIssued(application: PartnerApplication | null) {
   return application?.status === "ISSUED";
 }
 
+export function isContractLocked(application: PartnerApplication | null) {
+  return Boolean(
+    application &&
+      (application.status === "CONTRACT_SIGNED" ||
+        application.status === "SUBMITTING" ||
+        application.status === "NEEDS_MANUAL_CHECK" ||
+        application.status === "ISSUED"),
+  );
+}
+
+export function isResumable(application: PartnerApplication | null) {
+  return Boolean(application && (application.status === "VERIFIED" || application.status === "CONTRACT"));
+}
+
 export function isVerifiedOrLater(application: PartnerApplication | null) {
-  return Boolean(application && (application.status === "VERIFIED" || application.status === "CONTRACT" || application.status === "ISSUED"));
+  return Boolean(
+    application &&
+      (application.status === "VERIFIED" ||
+        application.status === "CONTRACT" ||
+        application.status === "SIGNING" ||
+        application.status === "CONTRACT_SIGNED" ||
+        application.status === "SUBMITTING" ||
+        application.status === "NEEDS_MANUAL_CHECK" ||
+        application.status === "ISSUED"),
+  );
+}
+
+export async function patchApplication(id: string, patch: Record<string, unknown>) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("partner_applications")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return toApplication(data);
+}
+
+export async function claimSigning(id: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("partner_applications")
+    .update({ status: "SIGNING", updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .in("status", ["VERIFIED", "CONTRACT"])
+    .select("*")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? toApplication(data) : null;
+}
+
+export async function getApplicationByDocToken(token: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("partner_applications").select("*").eq("doc_token", token).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? toApplication(data) : null;
+}
+
+export async function getIssuedApplicationByEmpId(empId: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("partner_applications")
+    .select("*")
+    .eq("emp_id", empId)
+    .eq("status", "ISSUED")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? toApplication(data) : null;
+}
+
+export async function claimSubmitting(
+  id: string,
+  fromStatuses: PartnerApplicationStatus[],
+  patch: { empId: string; idempotencyKey: string; issueAttempts: number },
+) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("partner_applications")
+    .update({
+      status: "SUBMITTING",
+      emp_id: patch.empId,
+      idempotency_key: patch.idempotencyKey,
+      issue_attempts: patch.issueAttempts,
+      last_error_code: null,
+      last_error_message: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .in("status", fromStatuses)
+    .select("*")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? toApplication(data) : null;
+}
+
+export type AdminApplicationFilter = {
+  status?: string;
+  channel?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+  manualOnly?: boolean;
+};
+
+export async function listApplications(filter: AdminApplicationFilter) {
+  const supabase = getSupabaseAdmin();
+  let query = supabase.from("partner_applications").select("*").order("updated_at", { ascending: false }).limit(200);
+  if (filter.manualOnly) query = query.eq("status", "NEEDS_MANUAL_CHECK");
+  else if (filter.status) query = query.eq("status", filter.status);
+  if (filter.channel) query = query.eq("channel_slug", filter.channel);
+  if (filter.from) query = query.gte("created_at", filter.from);
+  if (filter.to) query = query.lte("created_at", filter.to);
+  if (filter.q) {
+    const q = filter.q.trim().replace(/[%(),]/g, "");
+    if (q) query = query.or(`cert_name.ilike.%${q}%,emp_id.ilike.%${q}%,emp_code.ilike.%${q}%`);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data || []).map(toApplication);
+}
+
+export async function getApplicationById(id: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("partner_applications").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? toApplication(data) : null;
+}
+
+export async function listAuditLogs(applicationId: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("application_audit_logs")
+    .select("*")
+    .eq("application_id", applicationId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data || [];
 }

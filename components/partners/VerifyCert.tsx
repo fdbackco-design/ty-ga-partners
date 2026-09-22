@@ -7,7 +7,15 @@ import PartnerApplyShell from "@/components/partners/PartnerApplyShell";
 import { useNiceCert } from "@/hooks/useNiceCert";
 import { isInAppBrowser } from "@/lib/inAppBrowser";
 
-export default function VerifyCert({ maskedName, maskedPhone }: { maskedName: string; maskedPhone: string }) {
+export default function VerifyCert({
+  maskedName,
+  maskedPhone,
+  recert = false,
+}: {
+  maskedName: string;
+  maskedPhone: string;
+  recert?: boolean;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -81,7 +89,11 @@ export default function VerifyCert({ maskedName, maskedPhone }: { maskedName: st
   return (
     <PartnerApplyShell step={1} title="본인인증" backHref="/partners/apply">
       {showInApp ? <InAppBrowserNotice href={pageHref} /> : null}
-      <p className="partner-apply-lead">가입하신 정보와 휴대폰 명의가 같은지 확인합니다.</p>
+      <p className="partner-apply-lead">
+        {recert
+          ? "본인인증 유효 시간이 지나 다시 인증이 필요합니다. 인증이 끝나면 계약서 작성으로 이동합니다."
+          : "가입하신 정보와 휴대폰 명의가 같은지 확인합니다."}
+      </p>
       <dl className="partner-apply-id">
         <div>
           <dt>이름</dt>
@@ -105,7 +117,7 @@ export default function VerifyCert({ maskedName, maskedPhone }: { maskedName: st
       {error ? <p className="partner-apply-alert">{error}</p> : null}
       <div className="partner-apply-cta">
         <button type="button" className="btn-apply" onClick={onClick} disabled={pending}>
-          {pending ? "인증 진행 중..." : retryable ? "다시 인증하기" : "휴대폰으로 본인인증"}
+          {pending ? "인증 진행 중..." : recert || retryable ? "다시 인증하기" : "휴대폰으로 본인인증"}
         </button>
       </div>
     </PartnerApplyShell>

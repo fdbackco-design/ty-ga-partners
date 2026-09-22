@@ -11,7 +11,7 @@ create table if not exists public.partner_applications (
   cert_mobile text,
   cert_gender integer,
   cert_national text,
-  cert_di text unique,
+  cert_di text,
   cert_response_no text,
   cert_at timestamptz,
   ssn_gender_code text,

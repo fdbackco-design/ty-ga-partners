@@ -107,7 +107,7 @@ export const COMPANY = {
   seoul: "서울 영등포구 의사당대로1길 25, 404호",
   phone: "1833-2682",
   customerCenter: "1588-0393",
-  email: "taeyanglife@naver.com",
+  email: "ty-life@ty-life.co.kr",
   copyright: "Copyright ⓒ 2026 태양라이프 All rights reserved.",
   blog: "https://blog.naver.com/taeyanglife_",
   instagram: "https://www.instagram.com/ty_trip_official/",

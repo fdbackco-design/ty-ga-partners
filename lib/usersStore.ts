@@ -57,6 +57,22 @@ export async function findUserByUsername(username: string) {
   return data ? toUser(data) : null;
 }
 
+export async function findUserById(id: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("ga_users").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? toUser(data) : null;
+}
+
+export async function findUsersByIds(ids: string[]) {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (!unique.length) return [] as StoredUser[];
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("ga_users").select("*").in("id", unique);
+  if (error) throw new Error(error.message);
+  return (data || []).map(toUser);
+}
+
 export async function createUser(input: {
   username: string;
   password: string;
