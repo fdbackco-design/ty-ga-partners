@@ -4,13 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { NAV } from "@/lib/data";
+import { ADMIN_NAV, NAV } from "@/lib/data";
+
+function navActive(pathname: string, href: string) {
+  return href.startsWith("/") && !href.startsWith("/#") && pathname.startsWith(href);
+}
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const { user, ready, isAdmin, logout } = useAuth();
+  const menu = !ready ? [] : isAdmin ? ADMIN_NAV : NAV;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -35,16 +40,8 @@ export default function Header() {
         </Link>
 
         <nav className="nav">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                item.href.startsWith("/") && !item.href.startsWith("/#") && pathname.startsWith(item.href)
-                  ? "is-on"
-                  : ""
-              }
-            >
+          {menu.map((item) => (
+            <Link key={item.href} href={item.href} className={navActive(pathname, item.href) ? "is-on" : ""}>
               {item.label}
             </Link>
           ))}
@@ -55,16 +52,6 @@ export default function Header() {
             {user ? (
               <>
                 <span className="header-user">{isAdmin ? "관리자" : `${user.name}님`}</span>
-                {isAdmin ? (
-                  <>
-                    <Link href="/admin/partners" className={`header-text-btn ${pathname.startsWith("/admin/partners") ? "is-on" : ""}`}>
-                      신청관리
-                    </Link>
-                    <Link href="/admin/channels" className={`header-text-btn ${pathname.startsWith("/admin/channels") ? "is-on" : ""}`}>
-                      채널관리
-                    </Link>
-                  </>
-                ) : null}
                 <button type="button" className="header-text-btn" onClick={logout}>
                   로그아웃
                 </button>
@@ -83,9 +70,11 @@ export default function Header() {
               </>
             )}
           </div>
-          <Link href="/#inputcontact" className="btn-ghost">
-            신청하기 →
-          </Link>
+          {isAdmin ? null : (
+            <Link href="/#inputcontact" className="btn-ghost">
+              신청하기 →
+            </Link>
+          )}
           <button
             type="button"
             className="mobile-menu items-center justify-center w-11 h-11"
@@ -105,29 +94,18 @@ export default function Header() {
       {open ? (
         <div className="border-t border-[#f2f2f2] bg-white/96 backdrop-blur-md shadow-[0_16px_32px_rgba(20,20,30,0.08)]">
           <div className="wrap py-4 flex flex-col">
-            {NAV.map((item) => (
+            {menu.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="py-3 font-semibold"
+                className={`py-3 font-semibold ${navActive(pathname, item.href) ? "is-on" : ""}`}
                 onClick={() => setOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
             {user ? (
-              <>
-                {isAdmin ? (
-                  <>
-                    <Link href="/admin/partners" className="py-3 font-semibold" onClick={() => setOpen(false)}>
-                      신청관리
-                    </Link>
-                    <Link href="/admin/channels" className="py-3 font-semibold" onClick={() => setOpen(false)}>
-                      채널관리
-                    </Link>
-                  </>
-                ) : null}
-                <button
+              <button
                 type="button"
                 className="py-3 font-semibold text-left"
                 onClick={() => {
@@ -137,7 +115,6 @@ export default function Header() {
               >
                 로그아웃
               </button>
-              </>
             ) : (
               <>
                 <Link href="/login" className="py-3 font-semibold" onClick={() => setOpen(false)}>
@@ -148,13 +125,11 @@ export default function Header() {
                 </Link>
               </>
             )}
-            <Link
-              href="/#inputcontact"
-              className="btn-apply mt-3 h-12"
-              onClick={() => setOpen(false)}
-            >
-              파트너스 신청하기
-            </Link>
+            {isAdmin ? null : (
+              <Link href="/#inputcontact" className="btn-apply mt-3 h-12" onClick={() => setOpen(false)}>
+                파트너스 신청하기
+              </Link>
+            )}
           </div>
         </div>
       ) : null}
