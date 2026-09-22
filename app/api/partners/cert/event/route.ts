@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSignedInMemberUser, readChannelFromCookies } from "@/lib/partnerAccess";
-import { countCertAttempts, ensureDraftApplication, writeAuditLog } from "@/lib/partnerApplicationsStore";
+import { getSignedInMemberUser, preparePartnerApplication } from "@/lib/partnerAccess";
+import { countCertAttempts, writeAuditLog } from "@/lib/partnerApplicationsStore";
 import { clientIp, clientUserAgent } from "@/lib/requestMeta";
 import type { AuditEvent } from "@/lib/partnerApplication";
 
@@ -32,8 +32,7 @@ export async function POST(request: Request) {
 
   const ip = clientIp(request);
   const userAgent = clientUserAgent(request);
-  const channel = await readChannelFromCookies();
-  const application = await ensureDraftApplication(user.id, channel);
+  const { application } = await preparePartnerApplication(user);
 
   if (parsed.data.event === "CERT_OPENED") {
     const attempts = await countCertAttempts(user.id);

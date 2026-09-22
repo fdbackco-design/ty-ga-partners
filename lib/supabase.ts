@@ -10,6 +10,7 @@ export type UserRow = {
   phone: string;
   rrn_front: string;
   rrn_back_first: string;
+  channel: string | null;
   created_at: string;
 };
 
@@ -27,9 +28,40 @@ type Database = {
           phone: string;
           rrn_front: string;
           rrn_back_first: string;
+          channel?: string;
           created_at?: string;
         };
         Update: Partial<UserRow>;
+        Relationships: [];
+      };
+      ga_channels: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          org_code: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          org_code?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          name: string;
+          slug: string;
+          org_code: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        }>;
         Relationships: [];
       };
       partner_applications: {

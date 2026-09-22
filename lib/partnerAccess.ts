@@ -1,15 +1,16 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { CHANNEL_COOKIE, resolveChannel, type Channel } from "@/config/channels";
+import { CHANNEL_COOKIE, type Channel } from "@/config/channels";
+import { resolveActiveChannel, resolveStoredChannel } from "@/lib/channelsStore";
 import { getMemberFromCookies } from "@/lib/member";
 import {
   ensureDraftApplication,
+  getApplicationByUserId,
   isIssued,
   isVerifiedOrLater,
-  writeAuditLog,
 } from "@/lib/partnerApplicationsStore";
 import { getVerifySessionFromCookies } from "@/lib/partnerVerifyToken";
-import { findUserByUsername, type StoredUser } from "@/lib/usersStore";
+import { findUserByUsername, setUserChannel, type StoredUser } from "@/lib/usersStore";
 import { isCompleteFlowStatus, type PartnerApplication } from "@/lib/partnerApplication";
 
 export async function getSignedInMemberUser(): Promise<StoredUser | null> {
@@ -26,26 +27,38 @@ export async function requireMemberUser(nextPath: string) {
 
 export async function readChannelFromCookies(): Promise<Channel> {
   const jar = await cookies();
-  return resolveChannel(jar.get(CHANNEL_COOKIE)?.value).channel;
+  const resolved = await resolveActiveChannel(jar.get(CHANNEL_COOKIE)?.value);
+  return resolved.channel;
 }
 
-export async function preparePartnerApplication(user: StoredUser, requestedCh?: string | null) {
-  const cookieChannel = await readChannelFromCookies();
-  const resolved = resolveChannel(requestedCh ?? cookieChannel.slug);
-  if (resolved.missed) {
-    await writeAuditLog({
-      userId: user.id,
-      event: "channel_miss",
-      meta: { requested: resolved.requested },
-    });
+export async function channelForUser(user: StoredUser): Promise<Channel> {
+  const existing = await getApplicationByUserId(user.id);
+  if (existing) {
+    return {
+      slug: existing.channelSlug,
+      orgCode: existing.orgCode,
+      label: existing.joinChannel,
+      joinChannel: existing.channelSlug,
+      active: true,
+    };
   }
-  const application = await ensureDraftApplication(user.id, resolved.channel);
-  return { application, channel: resolved.channel };
+  if (user.channel) return resolveStoredChannel(user.channel);
+  return readChannelFromCookies();
 }
 
-export async function requireApplyAccess(nextPath: string, requestedCh?: string | null) {
+export async function preparePartnerApplication(user: StoredUser) {
+  const channel = await channelForUser(user);
+  if (!user.channel) {
+    await setUserChannel(user.id, channel.slug);
+    user.channel = channel.slug;
+  }
+  const application = await ensureDraftApplication(user.id, channel);
+  return { application, channel };
+}
+
+export async function requireApplyAccess(nextPath: string) {
   const user = await requireMemberUser(nextPath);
-  const { application, channel } = await preparePartnerApplication(user, requestedCh);
+  const { application, channel } = await preparePartnerApplication(user);
   if (isIssued(application) || isCompleteFlowStatus(application.status, application.signedAt)) {
     redirect("/partners/apply/complete");
   }

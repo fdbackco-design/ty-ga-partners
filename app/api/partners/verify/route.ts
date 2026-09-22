@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSignedInMemberUser, readChannelFromCookies } from "@/lib/partnerAccess";
+import { getSignedInMemberUser, preparePartnerApplication } from "@/lib/partnerAccess";
 import {
   countCertAttempts,
-  ensureDraftApplication,
   getIssuedApplicationByDi,
   markApplicationFailed,
   saveVerifiedApplication,
@@ -68,8 +67,7 @@ export async function POST(request: Request) {
   }
 
   const payload = parsed.data;
-  const channel = await readChannelFromCookies();
-  const application = await ensureDraftApplication(user.id, channel);
+  const { application } = await preparePartnerApplication(user);
 
   try {
     const attempts = await countCertAttempts(user.id);

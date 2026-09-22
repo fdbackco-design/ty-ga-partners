@@ -83,7 +83,7 @@ describe("validateIssueFields", () => {
 
   it("joinChannel이 21자면 잘라내지 않고 실패한다", () => {
     const result = validateIssueFields({
-      application: { ...application, joinChannel: "가".repeat(21) },
+      application: { ...application, channelSlug: "a".repeat(21) },
       empId: "myungjin",
       empSsn1: "990311",
       issuedEmpIdTaken: false,
@@ -91,6 +91,30 @@ describe("validateIssueFields", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toContain("가입 경로");
+  });
+
+  it("저장된 channel 값을 joinChannel로 보낸다", () => {
+    const result = validateIssueFields({
+      application: { ...application, channelSlug: "channel2", joinChannel: "GA파트너스" },
+      empId: "myungjin",
+      empSsn1: "990311",
+      issuedEmpIdTaken: false,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.payload.joinChannel).toBe("channel2");
+  });
+
+  it("기본 채널 default slug는 channel1로 보낸다", () => {
+    const result = validateIssueFields({
+      application,
+      empId: "myungjin",
+      empSsn1: "990311",
+      issuedEmpIdTaken: false,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.payload.joinChannel).toBe("channel1");
   });
 
   it("감사로그용 페이로드는 주민번호 앞자리를 마스킹한다", () => {

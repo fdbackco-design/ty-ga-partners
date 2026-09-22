@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { CHANNEL_COOKIE } from "@/config/channels";
+import { resolveActiveChannel } from "@/lib/channelsStore";
 import {
   digitsOnly,
   validateName,
@@ -54,6 +57,8 @@ export async function POST(request: Request) {
   if (rrnBackError) return NextResponse.json({ error: rrnBackError }, { status: 400 });
 
   try {
+    const jar = await cookies();
+    const resolved = await resolveActiveChannel(jar.get(CHANNEL_COOKIE)?.value);
     const user = await createUser({
       username,
       password,
@@ -61,6 +66,7 @@ export async function POST(request: Request) {
       phone,
       rrnFront,
       rrnBackFirst,
+      channel: resolved.channel.slug,
     });
     const profile = toProfile(user);
     const res = NextResponse.json({ ok: true, user: profile });

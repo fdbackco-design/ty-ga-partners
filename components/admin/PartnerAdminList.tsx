@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CHANNELS } from "@/config/channels";
 
 type Row = {
   id: string;
@@ -19,6 +18,8 @@ type Row = {
   lastErrorMessage: string | null;
 };
 
+type ChannelOption = { slug: string; name: string };
+
 const STATUSES = [
   "",
   "CONTRACT_SIGNED",
@@ -30,6 +31,7 @@ const STATUSES = [
 
 export default function PartnerAdminList() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [channels, setChannels] = useState<ChannelOption[]>([]);
   const [status, setStatus] = useState("");
   const [channel, setChannel] = useState("");
   const [q, setQ] = useState("");
@@ -44,6 +46,20 @@ export default function PartnerAdminList() {
     if (q.trim()) params.set("q", q.trim());
     return params.toString();
   }, [status, channel, q, manual]);
+
+  useEffect(() => {
+    let alive = true;
+    void fetch("/api/admin/channels", { cache: "no-store" })
+      .then(async (res) => {
+        const data = (await res.json()) as { channels?: ChannelOption[]; error?: string };
+        if (!alive || !res.ok) return;
+        setChannels(data.channels || []);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -83,9 +99,9 @@ export default function PartnerAdminList() {
         </select>
         <select value={channel} onChange={(e) => setChannel(e.target.value)}>
           <option value="">전체 채널</option>
-          {Object.values(CHANNELS).map((item) => (
+          {channels.map((item) => (
             <option key={item.slug} value={item.slug}>
-              {item.label}
+              {item.name}
             </option>
           ))}
         </select>
@@ -118,7 +134,7 @@ export default function PartnerAdminList() {
                   <td>{row.name || "-"}</td>
                   <td>{row.empId || "-"}</td>
                   <td>{row.empCode || "-"}</td>
-                  <td>{row.joinChannel}</td>
+                  <td>{row.channelSlug || row.joinChannel}</td>
                   <td>{new Date(row.updatedAt).toLocaleString("ko-KR")}</td>
                 </tr>
               ))

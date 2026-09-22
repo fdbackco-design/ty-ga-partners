@@ -16,7 +16,7 @@ export default async function AdminPartnersPage() {
     <main className="legal-page">
       <div className="wrap">
         <p className="text-sm text-[var(--sub)]">
-          <Link href="/">홈</Link> / 파트너 신청
+          <Link href="/">홈</Link> / 파트너 신청 · <Link href="/admin/channels">채널 관리</Link>
         </p>
         <h1 className="legal-title">파트너 신청</h1>
         <p className="mt-3 text-[var(--sub)]">수동 확인이 필요한 건부터 처리하세요. TY 사원등록은 취소할 수 없습니다.</p>

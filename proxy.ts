@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CHANNEL_COOKIE, resolveChannel } from "@/config/channels";
+import { CHANNEL_COOKIE, DEFAULT_CHANNEL_SLUG, requestChannelParam } from "@/config/channels";
 
 const channelCookieOptions = {
   httpOnly: true,
@@ -11,17 +11,16 @@ const channelCookieOptions = {
 
 export function proxy(request: NextRequest) {
   const response = NextResponse.next();
-  const requested = request.nextUrl.searchParams.get("ch");
+  const requested = requestChannelParam(request.nextUrl.searchParams);
   const existing = request.cookies.get(CHANNEL_COOKIE)?.value;
-  if (requested != null && requested !== "") {
-    const { channel } = resolveChannel(requested);
-    response.cookies.set(CHANNEL_COOKIE, channel.slug, channelCookieOptions);
+  if (requested) {
+    response.cookies.set(CHANNEL_COOKIE, requested, channelCookieOptions);
   } else if (!existing) {
-    response.cookies.set(CHANNEL_COOKIE, "default", channelCookieOptions);
+    response.cookies.set(CHANNEL_COOKIE, DEFAULT_CHANNEL_SLUG, channelCookieOptions);
   }
   return response;
 }
 
 export const config = {
-  matcher: ["/partners/:path*", "/api/partners/:path*"],
+  matcher: ["/", "/signup", "/login", "/partners/:path*", "/api/partners/:path*", "/api/member/:path*"],
 };

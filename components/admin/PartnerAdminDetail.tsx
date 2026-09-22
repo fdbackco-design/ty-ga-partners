@@ -117,6 +117,10 @@ export default function PartnerAdminDetail({ initial }: { initial: Detail }) {
           </dd>
         </div>
         <div>
+          <dt>채널</dt>
+          <dd>{app.channelSlug}</dd>
+        </div>
+        <div>
           <dt>소속</dt>
           <dd>
             {app.orgName || app.joinChannel} ({app.orgCode})
