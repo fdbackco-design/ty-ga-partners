@@ -30,11 +30,11 @@ export async function getIssuedApplicationByDi(di: string): Promise<PartnerAppli
 }
 
 export async function ensureDraftApplication(userId: string, channel: Channel): Promise<PartnerApplication> {
+  const existing = await getApplicationByUserId(userId);
+  if (existing) return existing;
   if (channel.joinChannel.length > JOIN_CHANNEL_MAX) {
     throw new Error("채널 식별값이 올바르지 않습니다.");
   }
-  const existing = await getApplicationByUserId(userId);
-  if (existing) return existing;
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("partner_applications")
@@ -43,7 +43,7 @@ export async function ensureDraftApplication(userId: string, channel: Channel): 
       status: "DRAFT",
       channel_slug: channel.slug,
       org_code: channel.orgCode,
-      join_channel: channel.joinChannel,
+      join_channel: channel.slug,
     })
     .select("*")
     .single();

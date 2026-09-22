@@ -1,4 +1,4 @@
-import { CHANNELS, JOIN_CHANNEL_MAX } from "@/config/channels";
+import { DEFAULT_ORG_CODE, JOIN_CHANNEL_MAX, normalizeChannelSlug } from "@/config/channels";
 import { getAppUrl } from "@/lib/siteUrl";
 import type { PartnerApplication } from "@/lib/partnerApplication";
 import { toApiSsn2 } from "@/utils/ssn";
@@ -17,7 +17,7 @@ export type EmployeePayload = {
 export type IssueValidation = { ok: true; payload: EmployeePayload } | { ok: false; error: string };
 
 function orgCodeKnown(orgCode: string) {
-  return Object.values(CHANNELS).some((channel) => channel.orgCode === orgCode);
+  return orgCode === DEFAULT_ORG_CODE;
 }
 
 export function issueIdempotencyKey(applicationId: string) {
@@ -77,7 +77,11 @@ export function validateIssueFields(input: {
     return { ok: false, error: "휴대폰 번호가 본인인증 결과와 일치하지 않습니다." };
   }
 
-  const joinChannel = application.joinChannel || "";
+  const storedChannel = String(application.channelSlug || "").trim();
+  if (storedChannel && storedChannel !== "default" && storedChannel.length > JOIN_CHANNEL_MAX) {
+    return { ok: false, error: "가입 경로가 너무 깁니다." };
+  }
+  const joinChannel = storedChannel ? normalizeChannelSlug(storedChannel) : application.joinChannel || "";
   if (!joinChannel) return { ok: false, error: "가입 경로가 없습니다." };
   if (joinChannel.length > JOIN_CHANNEL_MAX) {
     return { ok: false, error: "가입 경로가 너무 깁니다." };

@@ -5,6 +5,7 @@ import { getSupabaseAdmin, type UserRow } from "@/lib/supabase";
 export type StoredUser = UserProfile & {
   id: string;
   passwordHash: string;
+  channel: string;
   createdAt: string;
 };
 
@@ -32,6 +33,7 @@ function toUser(row: UserRow): StoredUser {
     phone: row.phone,
     rrnFront: row.rrn_front,
     rrnBackFirst: row.rrn_back_first,
+    channel: row.channel || "",
     createdAt: row.created_at,
   };
 }
@@ -80,6 +82,7 @@ export async function createUser(input: {
   phone: string;
   rrnFront: string;
   rrnBackFirst: string;
+  channel: string;
 }) {
   if (await findUserByUsername(input.username)) {
     throw new Error("이미 사용 중인 아이디입니다.");
@@ -95,6 +98,7 @@ export async function createUser(input: {
       phone: input.phone,
       rrn_front: input.rrnFront,
       rrn_back_first: input.rrnBackFirst,
+      channel: input.channel,
     })
     .select("*")
     .single();
@@ -103,6 +107,12 @@ export async function createUser(input: {
     throw new Error(error.message);
   }
   return toUser(data);
+}
+
+export async function setUserChannel(userId: string, channel: string) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("ga_users").update({ channel }).eq("id", userId).is("channel", null);
+  if (error) throw new Error(error.message);
 }
 
 export async function authenticateUser(username: string, password: string) {

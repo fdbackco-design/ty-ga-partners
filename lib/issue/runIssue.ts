@@ -1,4 +1,3 @@
-import { CHANNELS } from "@/config/channels";
 import {
   auditableEmployeePayload,
   issueIdempotencyKey,
@@ -29,8 +28,7 @@ export type IssueRunResult =
   | { ok: false; http: number; error: string; status?: PartnerApplicationStatus };
 
 function channelOrgName(application: PartnerApplication) {
-  const channel = Object.values(CHANNELS).find((item) => item.orgCode === application.orgCode);
-  return application.orgName || channel?.label || application.joinChannel;
+  return application.orgName || application.joinChannel;
 }
 
 export async function runEmployeeIssue(input: {
