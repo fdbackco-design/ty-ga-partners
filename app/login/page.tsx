@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LoginForm from "@/components/LoginForm";
 
 export const metadata = {
@@ -16,7 +17,9 @@ export default function LoginPage() {
         </h1>
         <p className="mt-3 text-center text-[var(--sub)]">로그인하면 파트너스 등록 정보가 자동으로 입력됩니다.</p>
         <div className="mt-10">
-          <LoginForm />
+          <Suspense>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </main>
