@@ -1,7 +1,7 @@
 import "server-only";
 
 import { classifyTyOutcome, dryRunEmployeeResponse, tyApiDryRunEnabled, type TyCallResult } from "@/lib/issue/tyResponse";
-import type { EmployeePayload } from "@/lib/issue/payload";
+import { auditableEmployeePayload, type EmployeePayload } from "@/lib/issue/payload";
 import { logError } from "@/lib/log";
 
 const TIMEOUT_MS = 10_000;
@@ -12,10 +12,7 @@ export function getTyApiBaseUrl() {
 
 export async function registerEmployee(payload: EmployeePayload, orgName: string): Promise<TyCallResult> {
   if (tyApiDryRunEnabled()) {
-    console.info("[ty-api] DRY_RUN payload", {
-      ...payload,
-      empSsn1: "●●●●●●",
-    });
+    console.info("[ty-api] DRY_RUN payload", auditableEmployeePayload(payload));
     return {
       ok: true,
       status: 200,

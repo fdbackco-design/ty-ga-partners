@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicIssueView } from "@/lib/partnerApplication";
 import { COMPANY } from "@/lib/data";
 
@@ -17,9 +17,10 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
   const [view, setView] = useState(initial);
   const [modal, setModal] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState(initial.status === "CONTRACT_SIGNED");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const autoIssueStarted = useRef(false);
   const processing = pending || view.status === "SUBMITTING";
 
   const refresh = useCallback(async () => {
@@ -47,7 +48,7 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
     return () => window.removeEventListener("beforeunload", onUnload);
   }, [processing]);
 
-  async function issue() {
+  const issue = useCallback(async () => {
     setPending(true);
     setError("");
     const res = await fetch("/api/partners/issue", {
@@ -63,7 +64,13 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
     if (latest?.status === "NEEDS_MANUAL_CHECK" || data.status === "NEEDS_MANUAL_CHECK") return;
     if (latest?.status === "SUBMITTING" || res.status === 409) return;
     setError(data.error || "코드 발급에 실패했습니다.");
-  }
+  }, [refresh]);
+
+  useEffect(() => {
+    if (view.status !== "CONTRACT_SIGNED" || autoIssueStarted.current) return;
+    autoIssueStarted.current = true;
+    void issue();
+  }, [view.status, issue]);
 
   async function copyCode() {
     if (!view.empCode) return;
