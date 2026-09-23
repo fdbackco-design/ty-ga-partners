@@ -5,41 +5,76 @@ import { useRouter } from "next/navigation";
 
 const MIN_LENGTH = 180;
 
+type Point = { x: number; y: number };
+
 export default function SignaturePad() {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
   const length = useRef(0);
-  const last = useRef<{ x: number; y: number } | null>(null);
+  const strokes = useRef<Point[][]>([]);
   const [ready, setReady] = useState(false);
-  const [landscape, setLandscape] = useState(true);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
+  function setupCtx(ctx: CanvasRenderingContext2D, dpr: number) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#111";
+    ctx.fillStyle = "#111";
+  }
+
+  function redraw() {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setupCtx(ctx, dpr);
+    for (const stroke of strokes.current) {
+      if (stroke.length === 1) {
+        ctx.beginPath();
+        ctx.arc(stroke[0].x, stroke[0].y, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+      if (stroke.length < 2) continue;
+      ctx.beginPath();
+      ctx.moveTo(stroke[0].x, stroke[0].y);
+      for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i].x, stroke[i].y);
+      ctx.stroke();
+    }
+  }
 
   function resize() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(rect.height * dpr);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "#111";
+    const nextW = Math.max(1, Math.floor(rect.width * dpr));
+    const nextH = Math.max(1, Math.floor(rect.height * dpr));
+    if (canvas.width !== nextW || canvas.height !== nextH) {
+      canvas.width = nextW;
+      canvas.height = nextH;
+    }
+    redraw();
   }
 
   useEffect(() => {
+    resize();
     const onResize = () => {
-      setLandscape(window.innerWidth >= window.innerHeight);
+      if (drawing.current) return;
       resize();
     };
-    onResize();
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+    };
   }, []);
 
   function pos(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -49,46 +84,56 @@ export default function SignaturePad() {
   }
 
   function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
+    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     drawing.current = true;
-    last.current = pos(event);
+    const point = pos(event);
+    strokes.current.push([point]);
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!ctx || !last.current) return;
+    const stroke = strokes.current[strokes.current.length - 1];
+    if (!ctx || !stroke?.length) return;
     const next = pos(event);
+    const prev = stroke[stroke.length - 1];
     ctx.beginPath();
-    ctx.moveTo(last.current.x, last.current.y);
+    ctx.moveTo(prev.x, prev.y);
     ctx.lineTo(next.x, next.y);
     ctx.stroke();
-    length.current += Math.hypot(next.x - last.current.x, next.y - last.current.y);
-    last.current = next;
-    setReady(length.current >= MIN_LENGTH);
+    length.current += Math.hypot(next.x - prev.x, next.y - prev.y);
+    stroke.push(next);
+    const nextReady = length.current >= MIN_LENGTH;
+    setReady((was) => (was === nextReady ? was : nextReady));
   }
 
   function onPointerUp() {
     drawing.current = false;
-    last.current = null;
+    resize();
   }
 
   function clear() {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokes.current = [];
     length.current = 0;
     setReady(false);
+    redraw();
   }
 
   async function confirm() {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const box = canvas.getBoundingClientRect();
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = 1000;
-    exportCanvas.height = Math.round((canvas.getBoundingClientRect().height / canvas.getBoundingClientRect().width) * 1000);
+    exportCanvas.height = Math.max(1, Math.round((box.height / box.width) * 1000));
     const ctx = exportCanvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
@@ -110,7 +155,6 @@ export default function SignaturePad() {
 
   return (
     <div className="signature-wrap">
-      {!landscape ? <p className="partner-apply-alert">휴대폰을 가로로 돌려주세요</p> : null}
       <canvas
         ref={canvasRef}
         className="signature-canvas"

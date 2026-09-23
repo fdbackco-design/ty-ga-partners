@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ContractPdfPreview from "@/components/partners/ContractPdfPreview";
 import type { PublicContractDraft } from "@/lib/partnerApplication";
 
 export default function ContractReview({ draft }: { draft: PublicContractDraft }) {
@@ -57,7 +58,7 @@ export default function ContractReview({ draft }: { draft: PublicContractDraft }
           </dd>
         </div>
       </dl>
-      <iframe className="contract-preview" title="계약서 미리보기" src="/api/partners/contract/preview" />
+      <ContractPdfPreview src="/api/partners/contract/preview" />
       <label className="contract-check is-confirm">
         <input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} />
         위 내용으로 위촉계약을 체결합니다
