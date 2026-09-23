@@ -7,10 +7,22 @@ const STEPS = [
     n: "01",
     image: "/images/cancer-step-1.jpg",
     position: "72% 70%",
-    title: "하나의 기준으로 정렬",
+    title: (
+      <>
+        하나의 기준으로
+        <br className="md:hidden" /> 정렬
+      </>
+    ),
     desc: (
       <>
-        8대 암 기준으로 <em>같은 구조로 정렬</em>
+        <span className="max-md:hidden">
+          8대 암 기준으로 <em>같은 구조로 정렬</em>
+        </span>
+        <span className="md:hidden">
+          8대 암 기준
+          <br />
+          <em>같은 구조로 정렬</em>
+        </span>
       </>
     ),
   },
@@ -18,10 +30,22 @@ const STEPS = [
     n: "02",
     image: "/images/cancer-step-2.jpg",
     position: "78% 62%",
-    title: "현재와 미래를 한 번에",
+    title: (
+      <>
+        현재와 미래를
+        <br className="md:hidden" /> 한 번에
+      </>
+    ),
     desc: (
       <>
-        종양표지자·유전자를 <em>한 화면에서 확인</em>
+        <span className="max-md:hidden">
+          종양표지자·유전자를 <em>한 화면에서 확인</em>
+        </span>
+        <span className="md:hidden">
+          표지자·유전자
+          <br />
+          <em>한 화면에서 확인</em>
+        </span>
       </>
     ),
   },
@@ -29,10 +53,22 @@ const STEPS = [
     n: "03",
     image: "/images/cancer-step-3.jpg",
     position: "center 40%",
-    title: "상담·관리까지 연결",
+    title: (
+      <>
+        상담·관리까지
+        <br className="md:hidden" /> 연결
+      </>
+    ),
     desc: (
       <>
-        설명부터 후속관리까지 <em>하나의 흐름으로</em>
+        <span className="max-md:hidden">
+          설명부터 후속관리까지 <em>하나의 흐름으로</em>
+        </span>
+        <span className="md:hidden">
+          상담부터 관리까지
+          <br />
+          <em>하나의 흐름으로</em>
+        </span>
       </>
     ),
   },
@@ -40,6 +76,7 @@ const STEPS = [
 
 const FOOTER = [
   {
+    id: "eight",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden>
         <rect x="3" y="3" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
@@ -48,9 +85,15 @@ const FOOTER = [
         <rect x="14" y="14" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
       </svg>
     ),
-    label: "8대 암을 한 번에",
+    label: (
+      <>
+        8대 암을
+        <br className="md:hidden" /> 한 번에
+      </>
+    ),
   },
   {
+    id: "future",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden>
         <circle cx="8" cy="12" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
@@ -59,9 +102,15 @@ const FOOTER = [
         <path d="M10.8 10.6 13.7 8.8M10.8 13.4l2.9 1.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
       </svg>
     ),
-    label: "현재 + 미래 통합 분석",
+    label: (
+      <>
+        현재 + 미래
+        <br className="md:hidden" /> 통합 분석
+      </>
+    ),
   },
   {
+    id: "care",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden>
         <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
@@ -74,7 +123,12 @@ const FOOTER = [
         />
       </svg>
     ),
-    label: "맞춤형 예방·관리",
+    label: (
+      <>
+        맞춤형
+        <br className="md:hidden" /> 예방·관리
+      </>
+    ),
   },
 ];
 
@@ -131,7 +185,7 @@ export default function Cancer() {
         <Reveal delay={160}>
           <ul className="cancer-footer">
             {FOOTER.map((item) => (
-              <li key={item.label}>
+              <li key={item.id}>
                 {item.icon}
                 {item.label}
               </li>

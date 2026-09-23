@@ -1,22 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ApplyButton from "../ApplyButton";
 
-const SLIDES = [
+type HeroSlide = {
+  id: string;
+  kind: "graphic" | "photo";
+  image: string;
+  focalX: string;
+  focalY: string;
+  fit?: "cover" | "contain";
+  eyebrow: string;
+  title: string[];
+  desc?: string[];
+  chips?: string[];
+  cta: string;
+  href: string;
+};
+
+const SLIDES: HeroSlide[] = [
   {
     id: "partners",
-    kind: "graphic" as const,
-    eyebrow: "TA - GA 공식인증센터",
-    title: ["업계 최상위 리워드", "TA - GA 파트너스"],
+    kind: "graphic",
+    image: "/images/hero.png",
+    focalX: "64%",
+    focalY: "50%",
+    eyebrow: "TY - GA 공식인증센터",
+    title: ["업계 최상위 리워드", "TY - GA 파트너스"],
     chips: ["하루 1시간", "언제 어디서든", "자격 시험 X"],
     cta: "파트너스 시작하기 →",
     href: "/#inputcontact",
   },
   {
     id: "life",
-    kind: "photo" as const,
+    kind: "photo",
     image: "/images/banner-2.jpg?v=2",
+    focalX: "70%",
+    focalY: "48%",
     eyebrow: "삶을 위한 모든 케어",
     title: ["태양라이프"],
     desc: ["평상시의 건강부터 특별한 순간까지.", "당신의 라이프스타일을 더욱 가치 있게 만듭니다."],
@@ -25,8 +45,10 @@ const SLIDES = [
   },
   {
     id: "alllife",
-    kind: "photo" as const,
+    kind: "photo",
     image: "/images/banner-3.jpg?v=2",
+    focalX: "76%",
+    focalY: "52%",
     eyebrow: "건강을 미리 준비하는 방법",
     title: ["TY올라이프케어"],
     desc: [
@@ -38,8 +60,10 @@ const SLIDES = [
   },
   {
     id: "cruise",
-    kind: "photo" as const,
+    kind: "photo",
     image: "/images/banner-4.jpg?v=2",
+    focalX: "84%",
+    focalY: "58%",
     eyebrow: "일상에 쉼을 더하는 특별한 여행",
     title: ["TY썬크루즈"],
     desc: [
@@ -54,6 +78,7 @@ const SLIDES = [
 export default function Hero() {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
+  const swipe = useRef({ active: false, x: 0, dx: 0 });
 
   const go = useCallback((next: number) => {
     setI((next + SLIDES.length) % SLIDES.length);
@@ -66,6 +91,27 @@ export default function Hero() {
     return () => clearInterval(t);
   }, [i, paused, go]);
 
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (event.target instanceof Element && event.target.closest("a, button")) return;
+    swipe.current = { active: true, x: event.clientX, dx: 0 };
+    setPaused(true);
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipe.current.active) return;
+    swipe.current.dx = event.clientX - swipe.current.x;
+  };
+
+  const endSwipe = () => {
+    if (!swipe.current.active) return;
+    const { dx } = swipe.current;
+    swipe.current.active = false;
+    setPaused(false);
+    if (dx > 48) go(i - 1);
+    else if (dx < -48) go(i + 1);
+  };
+
   const slide = SLIDES[i];
 
   return (
@@ -76,62 +122,76 @@ export default function Hero() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {SLIDES.map((item, idx) => (
-        <div
-          key={item.id}
-          className={`hero-slide ${item.kind === "graphic" ? "is-graphic" : "is-photo"} ${
-            i === idx ? "is-on" : ""
-          }`}
-          aria-hidden={i !== idx}
-        >
-          {item.kind === "photo" ? (
-            <img
-              src={item.image}
-              alt=""
-              width={4320}
-              height={1600}
-              decoding={idx === 1 ? "sync" : "async"}
-              fetchPriority={idx === 1 ? "high" : "low"}
-              draggable={false}
-            />
-          ) : null}
+      <div
+        className="hero-frame"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endSwipe}
+        onPointerCancel={endSwipe}
+      >
+        <div className="hero-stage">
+          {SLIDES.map((item, idx) => (
+            <div
+              key={item.id}
+              className={`hero-slide ${item.kind === "graphic" ? "is-graphic" : "is-photo"} ${
+                i === idx ? "is-on" : ""
+              }`}
+              aria-hidden={i !== idx}
+            >
+              <img
+                className="hero-image"
+                src={item.image}
+                alt=""
+                width={item.kind === "graphic" ? 1440 : 4320}
+                height={item.kind === "graphic" ? 571 : 1600}
+                decoding={idx === 1 ? "sync" : "async"}
+                fetchPriority={idx === 1 ? "high" : "low"}
+                draggable={false}
+                style={
+                  {
+                    "--focus-x": item.focalX,
+                    "--focus-y": item.focalY,
+                    "--hero-fit": item.fit ?? "cover",
+                  } as React.CSSProperties
+                }
+              />
+            </div>
+          ))}
         </div>
-      ))}
 
-      <div className="wrap hero-inner">
-        <div key={slide.id} className="hero-copy max-w-[580px]">
-          <p className="text-[22px] md:text-[24px] font-extrabold tracking-[-0.04em] text-[var(--ink)]">
-            {slide.eyebrow}
-          </p>
-          <h1 className="mt-4">
-            {slide.title.map((line, lineIdx) => (
-              <span key={line}>
-                {lineIdx > 0 ? <br /> : null}
-                {line}
-              </span>
-            ))}
-          </h1>
-          {"desc" in slide && slide.desc ? (
-            <p className="hero-desc">
-              {slide.desc.map((line) => (
-                <span key={line} className="block">
+        <div className="wrap hero-inner">
+          <div key={slide.id} className="hero-copy max-w-[580px]">
+            <p className="hero-eyebrow">{slide.eyebrow}</p>
+            <h1>
+              {slide.title.map((line, lineIdx) => (
+                <span key={line}>
+                  {lineIdx > 0 ? <br /> : null}
                   {line}
                 </span>
               ))}
-            </p>
-          ) : null}
-          {"chips" in slide && slide.chips ? (
-            <div className="chips">
-              {slide.chips.map((chip) => (
-                <span key={chip} className="chip">
-                  {chip}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          <ApplyButton className="mt-8" href={slide.href} badge={false}>
-            {slide.cta}
-          </ApplyButton>
+            </h1>
+            {slide.desc ? (
+              <p className="hero-desc">
+                {slide.desc.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+              </p>
+            ) : null}
+            {slide.chips ? (
+              <div className="chips">
+                {slide.chips.map((chip) => (
+                  <span key={chip} className="chip">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <ApplyButton className="hero-cta" href={slide.href} badge={false}>
+              {slide.cta}
+            </ApplyButton>
+          </div>
         </div>
       </div>
 

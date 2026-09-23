@@ -3,22 +3,46 @@ import Reveal from "../Reveal";
 const COLS = [
   {
     title: "사업비를 최소화하는 구조",
+    mobileTitle: (
+      <>
+        사업비를
+        <br />
+        최소화하는 구조
+      </>
+    ),
     icon: "hand-coins" as const,
     body: ["중간관리자에게 지급될 재원을", "스스로 영업하는 설계사에게 전액 지급"],
+    mobileBody: ["관리 재원을", "설계사에 전액 지급"],
   },
   {
     title: "최적화된 영업플랫폼 구축",
+    mobileTitle: (
+      <>
+        최적화된
+        <br />
+        영업플랫폼 구축
+      </>
+    ),
     icon: "handshake" as const,
     body: ["파트너가 직접 TY본사와 일하는 구조", "중간 유통과정이 없는 1:1 구조"],
+    mobileBody: ["본사와 직접 일함", "중간 없는 1:1 구조"],
   },
   {
     title: "혼자하는 영업이 아닌 함께하는 영업",
+    mobileTitle: (
+      <>
+        혼자하는 영업이
+        <br />
+        아닌 함께하는 영업
+      </>
+    ),
     icon: "users" as const,
     body: [
       "파트너스 자격 시험 X 누구나 가능",
       "코드등록 절차는 간편하게 누구나 가능",
       "전담 CS팀 배정으로 모든 과정 누구나 지원",
     ],
+    mobileBody: ["자격 시험 없이 가능", "CS가 전 과정 지원"],
     note: "*TY Life 본사 파트너스 공식인증센터",
   },
 ];
@@ -77,12 +101,20 @@ export default function Structure() {
         </Reveal>
         <div className="structure-grid">
           {COLS.map((col, i) => (
-            <Reveal key={col.title} delay={i * 90}>
+            <Reveal key={col.title} className="h-full min-w-0" delay={i * 90}>
               <article className="structure-item">
-                <h3>{col.title}</h3>
+                <h3>
+                  <span className="max-md:hidden">{col.title}</span>
+                  <span className="md:hidden">{col.mobileTitle ?? col.title}</span>
+                </h3>
                 <StructureIcon name={col.icon} />
-                <div className="structure-body">
+                <div className="structure-body structure-body-desktop">
                   {col.body.map((line) => (
+                    <StructureLine key={line} text={line} />
+                  ))}
+                </div>
+                <div className="structure-body structure-body-mobile">
+                  {col.mobileBody.map((line) => (
                     <StructureLine key={line} text={line} />
                   ))}
                 </div>

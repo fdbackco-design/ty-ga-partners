@@ -1,6 +1,6 @@
 import Reveal from "../Reveal";
 
-const POINTS = ["암종별\n동일 배치", "종양표지자 ＋ 유전자\n결과 동시 제시", "한 화면 요약\n인터페이스"];
+const POINTS = ["암종별\n동일 배치", "종양표지자 + 유전자\n결과 동시 제시", "한 화면 요약\n인터페이스"];
 
 export default function Report() {
   return (

@@ -19,7 +19,7 @@ export const revalidate = 1800;
 
 export default function Home() {
   return (
-    <main>
+    <main className="home-page">
       <Hero />
       <Intro />
       <Benefits />

@@ -31,7 +31,7 @@ export default function Header() {
   return (
     <header className={`header ${scrolled ? "is-scrolled" : ""}`}>
       <div className="wrap header-inner">
-        <Link href="/" className="flex items-center shrink-0 h-full">
+        <Link href="/" className="header-brand">
           <img
             src="/images/logo-header.png"
             alt="TY 1인 GA 파트너스"
@@ -82,7 +82,7 @@ export default function Header() {
           )}
           <button
             type="button"
-            className="mobile-menu items-center justify-center w-11 h-11"
+            className="mobile-menu"
             aria-label="메뉴"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
