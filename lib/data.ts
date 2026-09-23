@@ -186,8 +186,8 @@ export const SANGJO_TERMS = [
 ] as const;
 
 export const GALLERY = [
-  { src: "/images/gallery-landing.png", title: "맞춤 랜딩페이지" },
-  { src: "/images/gallery-detail.png", title: "상품 상세페이지" },
-  { src: "/images/gallery-promo.png", title: "간편 홍보" },
-  { src: "/images/gallery-docs.png", title: "전문자료 지원" },
+  { src: "/images/gallery-landing.png?v=2", title: "맞춤 랜딩페이지" },
+  { src: "/images/gallery-detail.png?v=2", title: "상품 상세페이지" },
+  { src: "/images/gallery-promo.png?v=2", title: "간편 홍보" },
+  { src: "/images/gallery-docs.png?v=2", title: "전문자료 지원" },
 ] as const;

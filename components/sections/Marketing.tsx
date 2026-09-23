@@ -18,13 +18,13 @@ export default function Marketing() {
             <br />
             쉽고 빠르게 시작하세요
           </h2>
-          <p className="mt-4 text-[22px] text-[#777]">마케팅이 어려울까 걱정하지 않으셔도 됩니다</p>
+          <p className="marketing-copy mt-4">마케팅이 어려울까 걱정하지 않으셔도 됩니다</p>
         </Reveal>
       </div>
 
       <div className="marketing-hero">
         <div className="marketing-staff-wrap">
-          <img className="marketing-staff" src="/images/staff-board.png?v=3" alt="" width={1000} height={750} />
+          <img className="marketing-staff" src="/images/staff-board.png?v=4" alt="" width={1000} height={750} />
         </div>
         <div className="gallery-viewport">
           <div className="gallery-track">
@@ -47,7 +47,7 @@ export default function Marketing() {
           <span className="inline-block rounded-[10px] bg-[var(--accent)] text-white px-3 py-1">필요한 자료</span>
           <span> 를 모두 제작해드립니다</span>
         </p>
-        <p className="mt-3 text-center text-[22px] text-[#777]">
+        <p className="marketing-copy marketing-copy-long wrap mt-3">
           파트너 전용 랜딩페이지부터 상세페이지까지 원스톱으로
         </p>
       </Reveal>

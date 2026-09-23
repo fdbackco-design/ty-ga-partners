@@ -14,6 +14,7 @@ export default function ApplyForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [rrnFront, setRrnFront] = useState("");
@@ -64,20 +65,16 @@ export default function ApplyForm() {
   }
 
   return (
-    <section id="inputcontact" className="py-[144px] md:py-[180px] bg-[#fff1ee]">
+    <section id="inputcontact" className="apply-section py-[144px] md:py-[180px] bg-[#fff1ee]">
       <div className="wrap">
         <Reveal>
-          <h2 className="text-center text-[36px] md:text-[48px] font-extrabold tracking-[-0.04em] text-[#ff6845]">
+          <h2 className="apply-title text-center text-[36px] md:text-[48px] font-extrabold tracking-[-0.04em] text-[#ff6845]">
             TY 파트너스 등록하기
           </h2>
         </Reveal>
         <Reveal delay={80}>
-          <form className="form-card mt-10" onSubmit={onSubmit}>
-            {user ? (
-              <p className="mb-5 text-sm text-[var(--sub)]">
-                로그인 정보로 이름, 전화번호, 주민등록번호가 자동 입력되었습니다.
-              </p>
-            ) : (
+          <form className="form-card" onSubmit={onSubmit}>
+            {!user && (
               <p className="mb-5 text-sm text-[var(--sub)]">
                 신청하려면 로그인이 필요합니다. 회원이 아니라면 회원가입 후 본인인증과 위촉계약서 작성으로 이어집니다.
               </p>
@@ -147,13 +144,28 @@ export default function ApplyForm() {
             </div>
             <div className="mt-6">
               <p className="font-extrabold mb-3">약관 동의</p>
-              <label className="agree-row">
-                <input type="checkbox" name="agree" />
-                <span>
-                  <span className="text-[#dc3545] font-bold">(필수)</span> 개인정보 수집 및 활용 동의
-                </span>
-              </label>
-              <PrivacyPolicyBox />
+              <div className="agree-row">
+                <input
+                  id="agree-privacy"
+                  type="checkbox"
+                  name="agree"
+                  aria-label="개인정보 수집 및 활용 동의 (필수)"
+                />
+                <button
+                  type="button"
+                  className="privacy-toggle"
+                  aria-expanded={privacyOpen}
+                  aria-controls="privacy-policy-panel"
+                  onClick={() => setPrivacyOpen((open) => !open)}
+                >
+                  <span>
+                    <span className="text-[#dc3545] font-bold">(필수)</span> 개인정보 수집 및 활용 동의
+                  </span>
+                </button>
+              </div>
+              <div id="privacy-policy-panel" className="privacy-panel" hidden={!privacyOpen}>
+                <PrivacyPolicyBox />
+              </div>
               <p className="privacy-source">
                 <a href="/privacy">개인정보 취급방침 전문 보기</a>
               </p>

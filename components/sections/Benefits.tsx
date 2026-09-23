@@ -25,7 +25,7 @@ export default function Benefits() {
   ];
 
   return (
-    <section className="pb-[144px] md:pb-[180px] bg-white">
+    <section className="benefits pb-[144px] md:pb-[180px] bg-white">
       <div className="wrap">
         <Reveal>
           <p className="section-label">보험 수익이 불안해요</p>
@@ -34,12 +34,16 @@ export default function Benefits() {
             TY-1인 GA파트너스를 활용하면 수익이 증가해요!
           </p>
         </Reveal>
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
+        <div className="benefits-grid mt-12 grid grid-cols-3 gap-6">
           {cards.map((card, i) => (
-            <Reveal key={card.icon} delay={i * 90}>
-              <article className="card-shadow card-hover px-7 py-11 text-center h-full">
-                <img src={card.icon} alt="" className="w-[118px] h-[118px] object-contain mx-auto" />
-                <div className="mt-7 text-[22px] font-extrabold leading-[1.65] tracking-[-0.03em]">
+            <Reveal key={card.icon} className="h-full min-w-0" delay={i * 90}>
+              <article className="benefits-card card-shadow card-hover px-7 py-11 text-center h-full">
+                <img
+                  src={card.icon}
+                  alt=""
+                  className="benefits-icon w-[118px] h-[118px] object-contain mx-auto"
+                />
+                <div className="benefits-copy mt-7 text-[22px] font-extrabold leading-[1.65] tracking-[-0.03em]">
                   {card.lines.map((line) => (
                     <p key={line} className={line.includes(card.strong) ? "accent" : ""}>
                       {line}

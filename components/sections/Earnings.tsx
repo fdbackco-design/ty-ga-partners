@@ -8,7 +8,7 @@ export default function Earnings() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="earnings" className="py-[160px] bg-white">
+    <section id="earnings" className="earnings py-[160px] bg-white">
       <div className="wrap">
         <Reveal>
           <p className="section-label">예상 수익 계산</p>
@@ -17,27 +17,31 @@ export default function Earnings() {
             <br />
             얼마일까?
           </h2>
-          <p className="mt-5 text-[18px] leading-8">
+          <p className="earnings-lead mt-5 text-[18px] leading-8">
             매월 상조 납부비용을 통해
             <br />
             예상 수익을 확인해보세요!
           </p>
         </Reveal>
 
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
+        <div className="earnings-grid mt-12 grid grid-cols-3 gap-6">
           {PRODUCTS.map((p, idx) => (
-            <Reveal key={p.name} delay={idx * 90}>
+            <Reveal key={p.name} className="h-full min-w-0" delay={idx * 90}>
               <button
                 type="button"
-                className="card-shadow card-hover px-6 py-11 text-center w-full h-full"
+                className="earnings-card card-shadow card-hover px-6 py-11 text-center w-full h-full"
                 onClick={() => setOpen(idx)}
               >
-                <img src={p.icon} alt="" className="w-[118px] h-[118px] object-contain mx-auto" />
-                <p className="mt-7 text-[22px] font-extrabold leading-[1.65]">
-                  월 상조비용 <span className="accent">{p.price}</span>
-                  <br />
-                  <span className="accent">{p.name}</span>
-                  {"sub" in p && p.sub ? p.sub : null}
+                <img src={p.icon} alt="" className="earnings-icon w-[118px] h-[118px] object-contain mx-auto" />
+                <p className="earnings-copy mt-7 text-[22px] font-extrabold leading-[1.65]">
+                  <span className="earnings-line">
+                    <span className="earnings-kicker">월 상조비용 </span>
+                    <span className="accent">{p.price}</span>
+                  </span>
+                  <span className="earnings-line">
+                    <span className="accent">{p.name}</span>
+                    {"sub" in p && p.sub ? <span className="earnings-sub">{p.sub}</span> : null}
+                  </span>
                 </p>
               </button>
             </Reveal>
