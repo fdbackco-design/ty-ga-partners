@@ -157,6 +157,10 @@ export function isContractLocked(application: PartnerApplication | null) {
   );
 }
 
+export function phoneChangeLocked(application: PartnerApplication | null) {
+  return isContractLocked(application);
+}
+
 export function isResumable(application: PartnerApplication | null) {
   return Boolean(application && (application.status === "VERIFIED" || application.status === "CONTRACT"));
 }

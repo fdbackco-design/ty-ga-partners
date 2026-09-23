@@ -115,6 +115,59 @@ export async function setUserChannel(userId: string, channel: string) {
   if (error) throw new Error(error.message);
 }
 
+export type PhoneHistoryItem = {
+  phone: string;
+  changedAt: string;
+};
+
+function historyTableMissing(message: string) {
+  return message.includes("ga_user_phone_history") || message.includes("schema cache");
+}
+
+export async function listPhoneHistory(userId: string): Promise<PhoneHistoryItem[]> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("ga_user_phone_history")
+    .select("phone, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    if (historyTableMissing(error.message)) {
+      throw new Error("휴대폰 변경 이력 테이블이 없습니다. Supabase에 마이그레이션을 적용해 주세요.");
+    }
+    throw new Error(error.message);
+  }
+  return (data || []).map((row) => ({ phone: row.phone, changedAt: row.created_at }));
+}
+
+export async function updateUserPhone(userId: string, currentPhone: string, nextPhone: string) {
+  const supabase = getSupabaseAdmin();
+  const { error: histError } = await supabase.from("ga_user_phone_history").insert({
+    user_id: userId,
+    phone: currentPhone,
+  });
+  if (histError) {
+    if (historyTableMissing(histError.message)) {
+      throw new Error("휴대폰 변경 이력 테이블이 없습니다. Supabase에 마이그레이션을 적용해 주세요.");
+    }
+    throw new Error(histError.message);
+  }
+  const { data, error } = await supabase.from("ga_users").update({ phone: nextPhone }).eq("id", userId).select("*").single();
+  if (error) throw new Error(error.message);
+  return toUser(data);
+}
+
+export async function updateUserPassword(userId: string, currentPassword: string, nextPassword: string) {
+  const user = await findUserById(userId);
+  if (!user || !verifyPassword(currentPassword, user.passwordHash)) {
+    throw new Error("현재 비밀번호가 올바르지 않습니다.");
+  }
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("ga_users").update({ password_hash: hashPassword(nextPassword) }).eq("id", userId);
+  if (error) throw new Error(error.message);
+}
+
 export async function authenticateUser(username: string, password: string) {
   const user = await findUserByUsername(username);
   if (!user || !verifyPassword(password, user.passwordHash)) return null;

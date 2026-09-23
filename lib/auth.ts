@@ -35,6 +35,13 @@ export function validatePhone(value: string) {
   return "";
 }
 
+export function formatPhoneDisplay(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return value;
+}
+
 export function validateRrnFront(value: string) {
   if (!/^\d{6}$/.test(value)) return "주민등록번호 앞 6자리를 입력해 주세요.";
   const month = Number(value.slice(2, 4));

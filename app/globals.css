@@ -1839,6 +1839,56 @@ input {
   background: #fff8f5;
 }
 
+.mypage-stack {
+  display: grid;
+  gap: 18px;
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.mypage-stack .form-card {
+  width: 100%;
+}
+
+.mypage-section-title {
+  margin: 0 0 14px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.mypage-history {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f0e4de;
+}
+
+.mypage-history h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.mypage-history ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.mypage-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.mypage-history time {
+  color: var(--sub);
+  white-space: nowrap;
+}
+
 .site-footer {
   background: #4a4944;
   color: #d4d2cc;
