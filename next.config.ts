@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  transpilePackages: ["pdfjs-dist"],
   experimental: {
     proxyClientMaxBodySize: "50mb",
     serverActions: {
