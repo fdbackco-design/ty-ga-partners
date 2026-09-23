@@ -5334,6 +5334,18 @@ input {
     padding: 20px 16px 24px;
     overflow: hidden;
   }
+
+  .apply-section .agree-row {
+    gap: 12px;
+    align-items: center;
+  }
+
+  .apply-section .agree-row input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    margin-top: 0;
+    accent-color: var(--accent);
+  }
   .form-grid > * {
     min-width: 0;
   }
