@@ -5,16 +5,141 @@ import { useRouter } from "next/navigation";
 import InAppBrowserNotice from "@/components/partners/InAppBrowserNotice";
 import PartnerApplyShell from "@/components/partners/PartnerApplyShell";
 import { useNiceCert } from "@/hooks/useNiceCert";
+import { formatSsn, stubSsnBack } from "@/lib/contract/validate";
+import { digitsOnly } from "@/lib/partnerCert";
 import { isInAppBrowser } from "@/lib/inAppBrowser";
+
+type StubDefaults = {
+  name: string;
+  phone: string;
+  ssnFront: string;
+  ssnBackFirst: string;
+};
 
 export default function VerifyCert({
   maskedName,
   maskedPhone,
   recert = false,
+  stub = false,
+  stubDefaults,
 }: {
   maskedName: string;
   maskedPhone: string;
   recert?: boolean;
+  stub?: boolean;
+  stubDefaults?: StubDefaults;
+}) {
+  if (stub && stubDefaults) {
+    return <VerifyCertStub recert={recert} defaults={stubDefaults} />;
+  }
+  return <VerifyCertNice maskedName={maskedName} maskedPhone={maskedPhone} recert={recert} />;
+}
+
+function VerifyCertStub({ recert, defaults }: { recert: boolean; defaults: StubDefaults }) {
+  const router = useRouter();
+  const [name, setName] = useState(defaults.name);
+  const [phone, setPhone] = useState(defaults.phone);
+  const [ssn, setSsn] = useState(() => {
+    const back = stubSsnBack(defaults.ssnFront, defaults.ssnBackFirst);
+    return back ? formatSsn(`${defaults.ssnFront}${back}`) : defaults.ssnFront;
+  });
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+
+  function fillValidSsn() {
+    const digits = digitsOnly(ssn);
+    const front = digits.slice(0, 6) || defaults.ssnFront;
+    const gender = digits.slice(6, 7) || defaults.ssnBackFirst;
+    const back = stubSsnBack(front, gender);
+    if (back) setSsn(formatSsn(`${front}${back}`));
+  }
+
+  async function onSubmit() {
+    setError("");
+    setPending(true);
+    try {
+      const res = await fetch("/api/partners/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stub: true, name, phone, ssn }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(data.error || "테스트 본인인증에 실패했습니다.");
+        return;
+      }
+      router.replace("/partners/apply/contract");
+    } catch {
+      setError("테스트 본인인증에 실패했습니다.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <PartnerApplyShell step={1} title="본인인증" backHref="/partners/apply">
+      <p className="partner-apply-lead">
+        {recert
+          ? "본인인증 유효 시간이 지나 다시 인증이 필요합니다. 테스트 정보를 다시 넣어 주세요."
+          : "테스트 서버용으로 이름, 휴대폰, 주민등록번호를 직접 넣을 수 있습니다."}
+      </p>
+      <p className="partner-cert-stub-note">
+        NICE 본인인증을 건너뛰는 임시 테스트 화면입니다. 사원등록 API에는 여기 입력한 이름·휴대폰·주민번호 앞자리가
+        전달됩니다. 운영 배포에서는 켜지지 않습니다.
+      </p>
+      <form
+        className="partner-cert-stub-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void onSubmit();
+        }}
+      >
+        <label>
+          이름
+          <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+        </label>
+        <label>
+          휴대폰
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            inputMode="numeric"
+            autoComplete="tel"
+          />
+        </label>
+        <label>
+          주민등록번호
+          <input
+            value={ssn}
+            onChange={(e) => setSsn(formatSsn(e.target.value))}
+            inputMode="numeric"
+            autoComplete="off"
+          />
+        </label>
+        <div className="partner-cert-stub-tools">
+          <button type="button" className="contract-ghost" onClick={fillValidSsn}>
+            체크섬 맞는 번호 채우기
+          </button>
+        </div>
+        {error ? <p className="partner-apply-alert">{error}</p> : null}
+        <div className="partner-apply-cta">
+          <button type="submit" className="btn-apply" disabled={pending}>
+            {pending ? "저장 중..." : recert ? "테스트 정보로 다시 인증" : "테스트 정보로 진행"}
+          </button>
+        </div>
+      </form>
+    </PartnerApplyShell>
+  );
+}
+
+function VerifyCertNice({
+  maskedName,
+  maskedPhone,
+  recert,
+}: {
+  maskedName: string;
+  maskedPhone: string;
+  recert: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");

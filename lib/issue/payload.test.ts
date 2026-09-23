@@ -117,7 +117,7 @@ describe("validateIssueFields", () => {
     expect(result.payload.joinChannel).toBe("channel1");
   });
 
-  it("감사로그용 페이로드는 주민번호 앞자리를 마스킹한다", () => {
+  it("감사로그용 페이로드는 주민번호 앞자리와 휴대폰을 마스킹한다", () => {
     const payload: EmployeePayload = {
       orgCode: "611361",
       empName: "이명진",
@@ -130,5 +130,8 @@ describe("validateIssueFields", () => {
     };
     expect(auditableEmployeePayload(payload).empSsn1).toBe("●●●●●●");
     expect(auditableEmployeePayload(payload).empSsn2).toBe("2000000");
+    expect(auditableEmployeePayload(payload).empMobile).toBe("010-****-5537");
+    expect(auditableEmployeePayload(payload).empName).toBe("이명진");
+    expect(auditableEmployeePayload(payload).empId).toBe("myungjin");
   });
 });

@@ -1,6 +1,7 @@
 import { DEFAULT_ORG_CODE, JOIN_CHANNEL_MAX, normalizeChannelSlug } from "@/config/channels";
 import { getAppUrl } from "@/lib/siteUrl";
 import type { PartnerApplication } from "@/lib/partnerApplication";
+import { maskPhone } from "@/lib/partnerCert";
 import { toApiSsn2 } from "@/utils/ssn";
 
 export type EmployeePayload = {
@@ -32,6 +33,7 @@ export function auditableEmployeePayload(payload: EmployeePayload) {
   return {
     ...payload,
     empSsn1: maskEmpSsn1(payload.empSsn1),
+    empMobile: maskPhone(payload.empMobile),
   };
 }
 

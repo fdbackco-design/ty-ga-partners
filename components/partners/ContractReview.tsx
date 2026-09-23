@@ -65,7 +65,7 @@ export default function ContractReview({ draft }: { draft: PublicContractDraft }
       {error ? <p className="partner-apply-alert">{error}</p> : null}
       <div className="partner-apply-cta">
         <button type="button" className="btn-apply" disabled={!confirm || pending} onClick={() => void submit()}>
-          {pending ? "체결 중..." : "계약 체결"}
+          {pending ? "체결 중..." : "계약 체결하고 코드 발급"}
         </button>
       </div>
     </>

@@ -30,6 +30,7 @@ type AuthContextValue = {
   signup: (input: SignupInput) => Promise<AuthResult>;
   login: (username: string, password: string) => Promise<AuthResult>;
   logout: () => void;
+  refreshMember: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -164,9 +165,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     void fetch("/api/member/session", { method: "DELETE" });
   }, []);
 
+  const refreshMember = useCallback(async () => {
+    const res = await fetch("/api/member/me", { cache: "no-store" });
+    const data = (await res.json()) as { user?: UserProfile | null };
+    if (data.user) setUser(data.user);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, ready, isAdmin, signup, login, logout }),
-    [user, ready, isAdmin, signup, login, logout],
+    () => ({ user, ready, isAdmin, signup, login, logout, refreshMember }),
+    [user, ready, isAdmin, signup, login, logout, refreshMember],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
