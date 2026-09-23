@@ -8,7 +8,10 @@ import {
   saveVerifiedApplication,
   writeAuditLog,
 } from "@/lib/partnerApplicationsStore";
+import { encryptSecret } from "@/lib/crypto";
+import { maskSsn } from "@/lib/contract/validate";
 import { digitsOnly, isEnctimeFresh, maskDi } from "@/lib/partnerCert";
+import { CERT_STUB_RESPONSE_NO, parseStubIdentity, partnerCertStubEnabled } from "@/lib/partnerCertStub";
 import { createVerifyToken, VERIFY_COOKIE, verifyCookieOptions } from "@/lib/partnerVerifyToken";
 import { clientIp, clientUserAgent } from "@/lib/requestMeta";
 import { birthdateFromRrn, ssnGenderCode } from "@/utils/ssn";
@@ -39,6 +42,32 @@ function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, "");
 }
 
+async function finishVerified(
+  user: NonNullable<Awaited<ReturnType<typeof getSignedInMemberUser>>>,
+  application: Awaited<ReturnType<typeof preparePartnerApplication>>["application"],
+  input: Parameters<typeof saveVerifiedApplication>[1],
+  ip: string | null,
+  userAgent: string | null,
+  meta: Record<string, unknown>,
+) {
+  const saved = await saveVerifiedApplication(application, input);
+  await writeAuditLog({
+    applicationId: saved.id,
+    userId: user.id,
+    event: "CERT_SUCCESS",
+    meta,
+    ip,
+    userAgent,
+  });
+  const res = NextResponse.json({ ok: true, status: saved.status, stub: Boolean(meta.stub) });
+  res.cookies.set(
+    VERIFY_COOKIE,
+    createVerifyToken({ userId: user.id, applicationId: saved.id }),
+    verifyCookieOptions(),
+  );
+  return res;
+}
+
 export async function POST(request: Request) {
   const ip = clientIp(request);
   const userAgent = clientUserAgent(request);
@@ -52,6 +81,45 @@ export async function POST(request: Request) {
     raw = await request.json();
   } catch {
     return NextResponse.json({ error: "요청 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+
+  if (raw && typeof raw === "object" && (raw as { stub?: unknown }).stub === true) {
+    if (!partnerCertStubEnabled()) {
+      return NextResponse.json({ error: "테스트 본인인증을 사용할 수 없습니다." }, { status: 403 });
+    }
+    const { application } = await preparePartnerApplication(user);
+    const parsed = parseStubIdentity(raw as { name?: string; phone?: string; ssn?: string });
+    if ("error" in parsed) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    try {
+      const attempts = await countCertAttempts(user.id);
+      if (attempts >= MAX_ATTEMPTS_PER_HOUR) {
+        return NextResponse.json({ error: "인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요." }, { status: 429 });
+      }
+      return await finishVerified(
+        user,
+        application,
+        {
+          certName: parsed.name,
+          certBirthdate: parsed.birthdate,
+          certMobile: parsed.phone,
+          certGender: parsed.certGender,
+          certNational: parsed.certNational,
+          certDi: parsed.certDi,
+          certResponseNo: CERT_STUB_RESPONSE_NO,
+          ssnGenderCode: parsed.genderCode,
+          ssnBackEnc: encryptSecret(parsed.back),
+          ssnMasked: maskSsn(parsed.front, parsed.back),
+        },
+        ip,
+        userAgent,
+        { stub: true, diPrefix: maskDi(parsed.certDi) },
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "테스트 본인인증에 실패했습니다.";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
   }
 
   const parsed = nicePayloadSchema.safeParse(raw);

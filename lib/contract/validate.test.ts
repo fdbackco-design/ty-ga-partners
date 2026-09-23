@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatBizRegNo, formatSsn, isValidBizRegNo, isValidSsnChecksum, maskAccount, maskSsn } from "./validate";
+import {
+  formatBizRegNo,
+  formatSsn,
+  isValidBizRegNo,
+  isValidSsnChecksum,
+  maskAccount,
+  maskSsn,
+  stubSsnBack,
+} from "./validate";
 
 describe("formatSsn", () => {
   it("앞 6자리 뒤에 하이픈을 넣는다", () => {
@@ -20,16 +28,10 @@ describe("maskSsn / maskAccount", () => {
 
 describe("isValidSsnChecksum", () => {
   it("체크섬이 맞는 번호만 통과한다", () => {
-    // 가중치 합으로 역산한 검증용 번호
     const front = "990311";
-    const back6 = "200000";
-    const weights = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
-    const digits = `${front}${back6}`.split("").map(Number);
-    let sum = 0;
-    for (let i = 0; i < 12; i += 1) sum += digits[i] * weights[i];
-    const check = (11 - (sum % 11)) % 10;
-    expect(isValidSsnChecksum(front, `${back6}${check}`)).toBe(true);
-    expect(isValidSsnChecksum(front, `${back6}${(check + 1) % 10}`)).toBe(false);
+    const back = stubSsnBack(front, "2");
+    expect(isValidSsnChecksum(front, back)).toBe(true);
+    expect(isValidSsnChecksum(front, `${back.slice(0, 6)}${(Number(back.slice(-1)) + 1) % 10}`)).toBe(false);
   });
 });
 

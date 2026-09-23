@@ -4746,6 +4746,47 @@ input {
   line-height: 1.5;
 }
 
+.partner-cert-stub-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff6e8;
+  color: #8a5a12;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.partner-cert-stub-form {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.partner-cert-stub-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sub);
+}
+
+.partner-cert-stub-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.partner-cert-stub-tools {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .partner-apply-notice {
   margin-bottom: 18px;
   padding: 16px 18px;

@@ -70,10 +70,11 @@ export async function runEmployeeIssue(input: {
   }
 
   const issuedSameId = await getIssuedApplicationByEmpId(user.username);
+  const empSsn1 = (application.certBirthdate || "").slice(2) || user.rrnFront;
   const validated = validateIssueFields({
     application,
     empId: user.username,
-    empSsn1: user.rrnFront,
+    empSsn1,
     issuedEmpIdTaken: Boolean(issuedSameId && issuedSameId.id !== application.id),
   });
   if (!validated.ok) {

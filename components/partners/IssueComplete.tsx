@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { formatKstDateTime } from "@/lib/formatDate";
 import type { PublicIssueView } from "@/lib/partnerApplication";
 import { COMPANY } from "@/lib/data";
 
@@ -113,7 +114,7 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
           </div>
           <div>
             <dt>발급일시</dt>
-            <dd>{view.issuedAt ? new Date(view.issuedAt).toLocaleString("ko-KR") : "-"}</dd>
+            <dd>{formatKstDateTime(view.issuedAt)}</dd>
           </div>
         </dl>
         {view.docToken ? (

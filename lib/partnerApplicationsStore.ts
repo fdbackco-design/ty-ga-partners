@@ -68,6 +68,8 @@ export async function saveVerifiedApplication(
     certDi: string;
     certResponseNo: string;
     ssnGenderCode: string;
+    ssnBackEnc?: string;
+    ssnMasked?: string;
   },
 ): Promise<PartnerApplication> {
   const supabase = getSupabaseAdmin();
@@ -84,6 +86,9 @@ export async function saveVerifiedApplication(
       cert_response_no: input.certResponseNo,
       cert_at: new Date().toISOString(),
       ssn_gender_code: input.ssnGenderCode,
+      ...(input.ssnBackEnc
+        ? { ssn_back_enc: input.ssnBackEnc, ssn_masked: input.ssnMasked || null }
+        : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", application.id)
