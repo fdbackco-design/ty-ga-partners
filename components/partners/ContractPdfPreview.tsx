@@ -10,7 +10,8 @@ export default function ContractPdfPreview({ src = "/api/partners/contract/previ
 
   useEffect(() => {
     let cancelled = false;
-    let pdf: { numPages: number; getPage: (n: number) => Promise<any>; destroy: () => Promise<unknown> } | null = null;
+    let pdf: { numPages: number; getPage: (n: number) => Promise<any> } | null = null;
+    let loadingTask: { destroy: () => Promise<void> } | null = null;
     let renderGen = 0;
     let lastWidth = -1;
     let timer: number | undefined;
@@ -59,9 +60,11 @@ export default function ContractPdfPreview({ src = "/api/partners/contract/previ
       const res = await fetch(src, { credentials: "same-origin", cache: "no-store" });
       if (!res.ok) throw new Error("fetch");
       const bytes = new Uint8Array(await res.arrayBuffer());
-      const loaded = await pdfjs.getDocument({ data: bytes }).promise;
+      const task = pdfjs.getDocument({ data: bytes });
+      loadingTask = task;
+      const loaded = await task.promise;
       if (cancelled) {
-        await loaded.destroy();
+        await task.destroy();
         return;
       }
       pdf = loaded;
@@ -81,7 +84,7 @@ export default function ContractPdfPreview({ src = "/api/partners/contract/previ
       cancelled = true;
       window.clearTimeout(timer);
       ro?.disconnect();
-      void pdf?.destroy();
+      void loadingTask?.destroy();
     };
   }, [src]);
 
