@@ -42,6 +42,18 @@ export function validateChannelInput(input: { name?: string; slug?: string }) {
   return { name, slug };
 }
 
+export function defaultChannelUpdateError(currentSlug: string, next: { slug: string; active: boolean }) {
+  if (currentSlug !== DEFAULT_CHANNEL_SLUG) return null;
+  if (next.slug !== DEFAULT_CHANNEL_SLUG) return "기본 채널의 URL 파라미터는 바꿀 수 없습니다.";
+  if (!next.active) return "기본 채널은 비활성화할 수 없습니다.";
+  return null;
+}
+
+export function defaultChannelDeleteError(slug: string) {
+  if (slug === DEFAULT_CHANNEL_SLUG) return "기본 채널은 삭제할 수 없습니다.";
+  return null;
+}
+
 export async function listChannels() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from("ga_channels").select("*").order("created_at", { ascending: true });
@@ -100,6 +112,24 @@ export async function resolveStoredChannel(raw: string | null | undefined): Prom
   };
 }
 
+async function getChannelRowById(id: string): Promise<ChannelRow> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("ga_channels").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("채널을 찾을 수 없습니다.");
+  return data;
+}
+
+async function channelHasRecords(slug: string) {
+  const supabase = getSupabaseAdmin();
+  const apps = await supabase.from("partner_applications").select("id", { count: "exact", head: true }).eq("channel_slug", slug);
+  if (apps.error) throw new Error(apps.error.message);
+  if ((apps.count || 0) > 0) return true;
+  const users = await supabase.from("ga_users").select("id", { count: "exact", head: true }).eq("channel", slug);
+  if (users.error) throw new Error(users.error.message);
+  return (users.count || 0) > 0;
+}
+
 export async function createChannel(input: { name: string; slug: string; active: boolean }): Promise<Channel> {
   const parsed = validateChannelInput(input);
   if ("error" in parsed) throw new Error(parsed.error);
@@ -121,20 +151,51 @@ export async function createChannel(input: { name: string; slug: string; active:
   return toChannel(data);
 }
 
-export async function setChannelActive(id: string, active: boolean): Promise<Channel> {
+export async function updateChannel(
+  id: string,
+  input: { name?: string; slug?: string; active?: boolean },
+): Promise<Channel> {
+  const current = await getChannelRowById(id);
+  const parsed = validateChannelInput({
+    name: input.name ?? current.name,
+    slug: input.slug ?? current.slug,
+  });
+  if ("error" in parsed) throw new Error(parsed.error);
+  const active = input.active ?? current.active;
+  const guarded = defaultChannelUpdateError(current.slug, { slug: parsed.slug, active });
+  if (guarded) throw new Error(guarded);
+
   const supabase = getSupabaseAdmin();
-  const { data: current, error: currentError } = await supabase.from("ga_channels").select("*").eq("id", id).maybeSingle();
-  if (currentError) throw new Error(currentError.message);
-  if (!current) throw new Error("채널을 찾을 수 없습니다.");
-  if (current.slug === DEFAULT_CHANNEL_SLUG && !active) {
-    throw new Error("기본 채널은 비활성화할 수 없습니다.");
-  }
   const { data, error } = await supabase
     .from("ga_channels")
-    .update({ active, updated_at: new Date().toISOString() })
+    .update({
+      name: parsed.name,
+      slug: parsed.slug,
+      active,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id)
     .select("*")
     .single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.code === "23505") throw new Error("이미 사용 중인 URL 파라미터입니다.");
+    throw new Error(error.message);
+  }
   return toChannel(data);
+}
+
+export async function setChannelActive(id: string, active: boolean): Promise<Channel> {
+  return updateChannel(id, { active });
+}
+
+export async function deleteChannel(id: string) {
+  const current = await getChannelRowById(id);
+  const guarded = defaultChannelDeleteError(current.slug);
+  if (guarded) throw new Error(guarded);
+  if (await channelHasRecords(current.slug)) {
+    throw new Error("이 채널로 가입하거나 신청한 사용자가 있어 삭제할 수 없습니다. 비활성화해 주세요.");
+  }
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("ga_channels").delete().eq("id", id);
+  if (error) throw new Error(error.message);
 }
