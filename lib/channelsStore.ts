@@ -31,7 +31,9 @@ export function toChannel(row: ChannelRow): Channel {
   };
 }
 
-export function validateChannelInput(input: { name?: string; slug?: string; orgCode?: string }) {
+export function validateChannelInput(
+  input: { name?: string; slug?: string; orgCode?: string },
+): { name: string; slug: string; orgCode: string } | { error: string } {
   const name = String(input.name || "").trim();
   const slug = sanitizeChannelSlug(input.slug);
   if (!name) return { error: "채널명을 입력해 주세요." };
@@ -40,7 +42,7 @@ export function validateChannelInput(input: { name?: string; slug?: string; orgC
   if (slug === "default") return { error: "이 파라미터는 사용할 수 없습니다." };
   if (slug.length > JOIN_CHANNEL_MAX) return { error: "URL 파라미터가 너무 깁니다." };
   const org = normalizeOrgCode(input.orgCode);
-  if ("error" in org) return org;
+  if ("error" in org) return { error: org.error };
   return { name, slug, orgCode: org.orgCode };
 }
 
