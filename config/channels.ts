@@ -56,6 +56,17 @@ export function buildChannelLandingUrl(origin: string, slug: string) {
   return `${base}?${CHANNEL_QUERY}=${encodeURIComponent(normalizeChannelSlug(slug))}`;
 }
 
+export function normalizeOrgCode(raw: string | null | undefined): { orgCode: string } | { error: string } {
+  const value = String(raw ?? "").trim();
+  if (!value) return { orgCode: DEFAULT_ORG_CODE };
+  if (!/^\d{4,12}$/.test(value)) return { error: "조직코드는 숫자 4~12자리로 입력해 주세요." };
+  return { orgCode: value };
+}
+
+export function isValidOrgCode(value: string) {
+  return /^\d{4,12}$/.test(String(value || ""));
+}
+
 export function channelFromSlug(slug: string, extras?: Partial<Channel>): Channel {
   const normalized = normalizeChannelSlug(slug);
   return {

@@ -1,12 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { DEFAULT_CHANNEL_SLUG } from "@/config/channels";
+import { DEFAULT_CHANNEL_SLUG, DEFAULT_ORG_CODE } from "@/config/channels";
 
 type ChannelRow = {
   id?: string;
   name: string;
   slug: string;
+  orgCode?: string;
   active: boolean;
   url: string;
 };
@@ -16,6 +17,7 @@ export default function ChannelAdmin() {
   const [editingId, setEditingId] = useState("");
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [orgCode, setOrgCode] = useState("");
   const [active, setActive] = useState(true);
   const [error, setError] = useState("");
   const [pending, setPending] = useState("");
@@ -49,6 +51,7 @@ export default function ChannelAdmin() {
     setEditingId("");
     setName("");
     setSlug("");
+    setOrgCode("");
     setActive(true);
   }
 
@@ -59,6 +62,7 @@ export default function ChannelAdmin() {
     setEditingId(row.id);
     setName(row.name);
     setSlug(row.slug);
+    setOrgCode(row.orgCode || "");
     setActive(row.active);
   }
 
@@ -70,7 +74,7 @@ export default function ChannelAdmin() {
     const res = await fetch(editing ? `/api/admin/channels/${editingId}` : "/api/admin/channels", {
       method: editing ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug, active }),
+      body: JSON.stringify({ name, slug, orgCode, active }),
     });
     const data = (await res.json()) as { channel?: ChannelRow; error?: string };
     setPending("");
@@ -157,6 +161,18 @@ export default function ChannelAdmin() {
               disabled={editingDefault}
             />
           </div>
+          <div>
+            <label htmlFor="channelOrgCode">조직코드</label>
+            <input
+              id="channelOrgCode"
+              type="text"
+              inputMode="numeric"
+              value={orgCode}
+              onChange={(e) => setOrgCode(e.target.value.trim())}
+              placeholder={DEFAULT_ORG_CODE}
+            />
+            <p className="partner-apply-hint">비우면 {DEFAULT_ORG_CODE}로 저장됩니다.</p>
+          </div>
         </div>
         <label className="admin-channel-active">
           <input
@@ -197,6 +213,7 @@ export default function ChannelAdmin() {
             <tr>
               <th>채널명</th>
               <th>파라미터</th>
+              <th>조직코드</th>
               <th>상태</th>
               <th>가입 URL</th>
               <th />
@@ -205,7 +222,7 @@ export default function ChannelAdmin() {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5}>등록된 채널이 없습니다.</td>
+                <td colSpan={6}>등록된 채널이 없습니다.</td>
               </tr>
             ) : (
               rows.map((row) => {
@@ -215,6 +232,7 @@ export default function ChannelAdmin() {
                   <tr key={row.slug} className={editingId && editingId === row.id ? "is-editing" : undefined}>
                     <td>{row.name}</td>
                     <td>{row.slug}</td>
+                    <td>{row.orgCode || DEFAULT_ORG_CODE}</td>
                     <td>
                       {isDefault ? (
                         "활성"

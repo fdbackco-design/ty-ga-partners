@@ -93,6 +93,28 @@ describe("validateIssueFields", () => {
     expect(result.error).toContain("가입 경로");
   });
 
+  it("저장된 채널 조직코드를 orgCode로 보낸다", () => {
+    const result = validateIssueFields({
+      application: { ...application, orgCode: "123456" },
+      empId: "myungjin",
+      empSsn1: "990311",
+      issuedEmpIdTaken: false,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.payload.orgCode).toBe("123456");
+  });
+
+  it("조직코드가 없으면 실패한다", () => {
+    const result = validateIssueFields({
+      application: { ...application, orgCode: "GA" },
+      empId: "myungjin",
+      empSsn1: "990311",
+      issuedEmpIdTaken: false,
+    });
+    expect(result.ok).toBe(false);
+  });
+
   it("저장된 channel 값을 joinChannel로 보낸다", () => {
     const result = validateIssueFields({
       application: { ...application, channelSlug: "channel2", joinChannel: "GA파트너스" },
