@@ -6484,3 +6484,26 @@ input {
   word-break: break-all;
   white-space: normal;
 }
+
+.admin-channel-form-actions,
+.admin-channel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-channel-actions .btn-ghost,
+.admin-channel-actions .resource-delete-btn {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.admin-table tr.is-editing td {
+  background: #fff8f5;
+}
+
+.admin-table td:has(.admin-channel-actions) {
+  white-space: normal;
+}
