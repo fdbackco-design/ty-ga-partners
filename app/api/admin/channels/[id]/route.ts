@@ -36,7 +36,9 @@ function errorStatus(message: string) {
     message.includes("비활성화") ||
     message.includes("삭제할 수 없") ||
     message.includes("바꿀 수 없") ||
-    message.includes("기본 채널")
+    message.includes("기본 채널") ||
+    message.includes("조직코드") ||
+    message.includes("조직 코드")
   ) {
     return 400;
   }
@@ -47,7 +49,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const auth = await requireAdminApi();
   if ("error" in auth) return auth.error;
   const { id } = await context.params;
-  let body: { name?: string; slug?: string; active?: boolean };
+  let body: { name?: string; slug?: string; orgCode?: string; active?: boolean };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -56,8 +58,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const hasName = typeof body.name === "string";
   const hasSlug = typeof body.slug === "string";
+  const hasOrgCode = typeof body.orgCode === "string";
   const hasActive = typeof body.active === "boolean";
-  if (!hasName && !hasSlug && !hasActive) {
+  if (!hasName && !hasSlug && !hasOrgCode && !hasActive) {
     return NextResponse.json({ error: "수정할 내용을 입력해 주세요." }, { status: 400 });
   }
 
@@ -65,6 +68,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const channel = await updateChannel(id, {
       name: hasName ? body.name : undefined,
       slug: hasSlug ? body.slug : undefined,
+      orgCode: hasOrgCode ? body.orgCode : undefined,
       active: hasActive ? body.active : undefined,
     });
     return NextResponse.json({ channel: withUrl(channel) });

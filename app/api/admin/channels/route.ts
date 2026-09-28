@@ -39,7 +39,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await requireAdminApi();
   if ("error" in auth) return auth.error;
-  let body: { name?: string; slug?: string; active?: boolean };
+  let body: { name?: string; slug?: string; orgCode?: string; active?: boolean };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -49,12 +49,17 @@ export async function POST(request: Request) {
     const channel = await createChannel({
       name: String(body.name || ""),
       slug: String(body.slug || ""),
+      orgCode: body.orgCode,
       active: body.active !== false,
     });
     return NextResponse.json({ channel: withUrl(channel) }, { status: 201 });
   } catch (error) {
     const message = publicError(error);
-    const status = message.includes("이미 사용 중") ? 409 : message.includes("입력") || message.includes("파라미터") ? 400 : 500;
+    const status = message.includes("이미 사용 중")
+      ? 409
+      : message.includes("입력") || message.includes("파라미터") || message.includes("조직코드")
+        ? 400
+        : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

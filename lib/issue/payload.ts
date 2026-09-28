@@ -1,4 +1,4 @@
-import { DEFAULT_ORG_CODE, JOIN_CHANNEL_MAX, normalizeChannelSlug } from "@/config/channels";
+import { isValidOrgCode, JOIN_CHANNEL_MAX, normalizeChannelSlug } from "@/config/channels";
 import { getAppUrl } from "@/lib/siteUrl";
 import type { PartnerApplication } from "@/lib/partnerApplication";
 import { maskPhone } from "@/lib/partnerCert";
@@ -16,10 +16,6 @@ export type EmployeePayload = {
 };
 
 export type IssueValidation = { ok: true; payload: EmployeePayload } | { ok: false; error: string };
-
-function orgCodeKnown(orgCode: string) {
-  return orgCode === DEFAULT_ORG_CODE;
-}
 
 export function issueIdempotencyKey(applicationId: string) {
   return `issue:${applicationId}`;
@@ -53,10 +49,9 @@ export function validateIssueFields(input: {
   if (empName !== (application.certName || "").trim()) {
     return { ok: false, error: "성명이 본인인증 결과와 일치하지 않습니다." };
   }
-  if (!application.orgCode || !orgCodeKnown(application.orgCode)) {
+  if (!application.orgCode || !isValidOrgCode(application.orgCode)) {
     return { ok: false, error: "소속 조직 코드가 올바르지 않습니다." };
   }
-  // TODO(확인필요): 테스트 서버에 orgCode 611361 조직이 세팅되어 있는지 TY측 확인 필요
   if (!empId.trim()) return { ok: false, error: "아이디가 없습니다." };
   if (issuedEmpIdTaken) return { ok: false, error: "이미 코드가 발급된 아이디입니다." };
 

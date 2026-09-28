@@ -1,10 +1,10 @@
 import {
   DEFAULT_CHANNEL,
   DEFAULT_CHANNEL_SLUG,
-  DEFAULT_ORG_CODE,
   JOIN_CHANNEL_MAX,
   isDefaultChannelSlug,
   normalizeChannelSlug,
+  normalizeOrgCode,
   sanitizeChannelSlug,
   type Channel,
 } from "@/config/channels";
@@ -31,7 +31,7 @@ export function toChannel(row: ChannelRow): Channel {
   };
 }
 
-export function validateChannelInput(input: { name?: string; slug?: string }) {
+export function validateChannelInput(input: { name?: string; slug?: string; orgCode?: string }) {
   const name = String(input.name || "").trim();
   const slug = sanitizeChannelSlug(input.slug);
   if (!name) return { error: "채널명을 입력해 주세요." };
@@ -39,7 +39,9 @@ export function validateChannelInput(input: { name?: string; slug?: string }) {
   if (!slug) return { error: "URL 파라미터는 영문, 숫자, -, _ 1~20자로 입력해 주세요." };
   if (slug === "default") return { error: "이 파라미터는 사용할 수 없습니다." };
   if (slug.length > JOIN_CHANNEL_MAX) return { error: "URL 파라미터가 너무 깁니다." };
-  return { name, slug };
+  const org = normalizeOrgCode(input.orgCode);
+  if ("error" in org) return org;
+  return { name, slug, orgCode: org.orgCode };
 }
 
 export function defaultChannelUpdateError(currentSlug: string, next: { slug: string; active: boolean }) {
@@ -130,7 +132,7 @@ async function channelHasRecords(slug: string) {
   return (users.count || 0) > 0;
 }
 
-export async function createChannel(input: { name: string; slug: string; active: boolean }): Promise<Channel> {
+export async function createChannel(input: { name: string; slug: string; orgCode?: string; active: boolean }): Promise<Channel> {
   const parsed = validateChannelInput(input);
   if ("error" in parsed) throw new Error(parsed.error);
   const supabase = getSupabaseAdmin();
@@ -139,7 +141,7 @@ export async function createChannel(input: { name: string; slug: string; active:
     .insert({
       name: parsed.name,
       slug: parsed.slug,
-      org_code: DEFAULT_ORG_CODE,
+      org_code: parsed.orgCode,
       active: input.active,
     })
     .select("*")
@@ -153,12 +155,13 @@ export async function createChannel(input: { name: string; slug: string; active:
 
 export async function updateChannel(
   id: string,
-  input: { name?: string; slug?: string; active?: boolean },
+  input: { name?: string; slug?: string; orgCode?: string; active?: boolean },
 ): Promise<Channel> {
   const current = await getChannelRowById(id);
   const parsed = validateChannelInput({
     name: input.name ?? current.name,
     slug: input.slug ?? current.slug,
+    orgCode: input.orgCode !== undefined ? input.orgCode : current.org_code,
   });
   if ("error" in parsed) throw new Error(parsed.error);
   const active = input.active ?? current.active;
@@ -171,6 +174,7 @@ export async function updateChannel(
     .update({
       name: parsed.name,
       slug: parsed.slug,
+      org_code: parsed.orgCode,
       active,
       updated_at: new Date().toISOString(),
     })

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildChannelLandingUrl,
   DEFAULT_CHANNEL_SLUG,
+  DEFAULT_ORG_CODE,
   normalizeChannelSlug,
+  normalizeOrgCode,
   requestChannelParam,
   sanitizeChannelSlug,
 } from "./channels";
@@ -25,5 +27,14 @@ describe("channel slug", () => {
     expect(buildChannelLandingUrl("https://tylifepartners.com/", "channel2")).toBe(
       "https://tylifepartners.com?channel=channel2",
     );
+  });
+});
+
+describe("orgCode", () => {
+  it("비우면 기본 조직코드를 쓰고 입력하면 그 값을 쓴다", () => {
+    expect(normalizeOrgCode("")).toEqual({ orgCode: DEFAULT_ORG_CODE });
+    expect(normalizeOrgCode("  ")).toEqual({ orgCode: DEFAULT_ORG_CODE });
+    expect(normalizeOrgCode("123456")).toEqual({ orgCode: "123456" });
+    expect(normalizeOrgCode("abc")).toEqual({ error: "조직코드는 숫자 4~12자리로 입력해 주세요." });
   });
 });

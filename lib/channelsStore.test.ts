@@ -11,6 +11,15 @@ describe("validateChannelInput", () => {
     expect(validateChannelInput({ name: " 입소문 파트너스 ", slug: "channel2" })).toEqual({
       name: "입소문 파트너스",
       slug: "channel2",
+      orgCode: "611361",
+    });
+    expect(validateChannelInput({ name: "입소문", slug: "channel2", orgCode: " 123456 " })).toEqual({
+      name: "입소문",
+      slug: "channel2",
+      orgCode: "123456",
+    });
+    expect(validateChannelInput({ name: "입소문", slug: "channel2", orgCode: "abc" })).toEqual({
+      error: "조직코드는 숫자 4~12자리로 입력해 주세요.",
     });
   });
 
