@@ -9,6 +9,7 @@ export const BLOCKED_FILE_EXT = /\.(exe|bat|cmd|com|msi|dll|sh|js)$/i;
 export type InquiryAttachment = {
   name: string;
   url: string;
+  pathname?: string;
   size: number;
   kind: "image" | "file";
 };
@@ -59,6 +60,7 @@ export function formatInquiryPhone(value: string) {
 export function normalizeStoredInquiry(item: Inquiry): Inquiry {
   return {
     ...item,
+    secret: true,
     authorPhone: item.authorPhone || "",
     attachments: Array.isArray(item.attachments) ? item.attachments : [],
     replies: Array.isArray(item.replies) ? item.replies : [],
@@ -83,7 +85,6 @@ export function toPublicInquiry(item: Inquiry, viewer: Viewer | null): Inquiry {
 }
 
 export function canViewInquiry(item: Inquiry, viewer: Viewer | null) {
-  if (!item.secret) return true;
   if (!viewer) return false;
   if (viewer.isAdmin) return true;
   return viewer.username === item.authorUsername;
@@ -117,6 +118,11 @@ export function toInquirySummary(item: Inquiry, viewer: Viewer | null): InquiryS
     answered: item.replies.length > 0,
     createdAt: item.createdAt,
   };
+}
+
+export function inquiryAttachmentSrc(inquiryId: string, file: Pick<InquiryAttachment, "url">, index: number) {
+  if (file.url.startsWith("/")) return file.url;
+  return `/api/inquiries/${inquiryId}/files/${index}`;
 }
 
 export function attachmentKind(fileName: string, mime?: string): "image" | "file" {

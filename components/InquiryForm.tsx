@@ -41,7 +41,6 @@ export default function InquiryForm({ item }: { item?: Inquiry }) {
     const data = new FormData(form);
     const title = String(data.get("title") || "").trim();
     const content = String(data.get("content") || "").trim();
-    const secret = data.get("secret") === "on";
     const images = [...((data.getAll("images") as File[]) || [])].filter((file) => file.size);
     const files = [...((data.getAll("files") as File[]) || [])].filter((file) => file.size);
     const allFiles = [...images, ...files];
@@ -72,13 +71,23 @@ export default function InquiryForm({ item }: { item?: Inquiry }) {
       if (storage === "blob") {
         const attachments: InquiryAttachment[] = [...kept];
         for (const file of allFiles) {
-          const blob = await upload(file.name, file, {
-            access: "public",
-            handleUploadUrl: "/api/inquiries/upload",
-          });
+          const pathname = `inquiries/uploads/${file.name}`;
+          let blob;
+          try {
+            blob = await upload(pathname, file, {
+              access: "private",
+              handleUploadUrl: "/api/inquiries/upload",
+            });
+          } catch {
+            blob = await upload(pathname, file, {
+              access: "public",
+              handleUploadUrl: "/api/inquiries/upload",
+            });
+          }
           attachments.push({
             name: file.name,
             url: blob.url,
+            pathname: blob.pathname,
             size: file.size,
             kind: attachmentKind(file.name, file.type),
           });
@@ -89,7 +98,6 @@ export default function InquiryForm({ item }: { item?: Inquiry }) {
           body: JSON.stringify({
             title,
             content,
-            secret,
             attachments,
             authorPhone: user?.phone || "",
           }),
@@ -160,10 +168,7 @@ export default function InquiryForm({ item }: { item?: Inquiry }) {
           <p className="mt-1 text-xs text-[var(--sub)]">이미지는 미리보기로, 파일은 내려받기로 표시됩니다. 각 10MB, 최대 8개.</p>
         </div>
         <div className="span-2">
-          <label className="agree-row">
-            <input type="checkbox" name="secret" defaultChecked={item?.secret} />
-            비밀글로 작성합니다. 작성자와 관리자만 내용을 볼 수 있습니다.
-          </label>
+          <p className="mt-1 text-sm text-[var(--sub)]">문의는 작성자와 관리자만 확인할 수 있습니다.</p>
         </div>
       </div>
       {error ? <p className="mt-4 text-sm text-[#dc3545]">{error}</p> : null}

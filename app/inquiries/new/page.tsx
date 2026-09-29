@@ -13,7 +13,7 @@ export default function NewInquiryPage() {
           <Link href="/">홈</Link> / <Link href="/inquiries">문의 게시판</Link> / 작성
         </p>
         <h1 className="legal-title">문의 작성</h1>
-        <p className="mt-3 text-[var(--sub)]">이미지와 파일을 함께 첨부할 수 있습니다.</p>
+        <p className="mt-3 text-[var(--sub)]">이미지와 파일을 함께 첨부할 수 있습니다. 문의는 작성자와 관리자만 확인할 수 있습니다.</p>
         <div className="mt-10">
           <InquiryForm />
         </div>

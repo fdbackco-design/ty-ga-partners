@@ -73,7 +73,6 @@ export async function POST(request: Request) {
   const id = crypto.randomUUID();
   let title = "";
   let content = "";
-  let secret = false;
   let attachments: InquiryAttachment[] = [];
   let submittedPhone = "";
 
@@ -82,13 +81,11 @@ export async function POST(request: Request) {
       const body = (await request.json()) as {
         title?: string;
         content?: string;
-        secret?: boolean;
         authorPhone?: string;
         attachments?: InquiryAttachment[];
       };
       title = String(body.title || "").trim();
       content = String(body.content || "").trim();
-      secret = Boolean(body.secret);
       submittedPhone = normalizeInquiryPhone(String(body.authorPhone || ""));
       attachments = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_INQUIRY_ATTACHMENTS) : [];
       for (const file of attachments) {
@@ -103,7 +100,6 @@ export async function POST(request: Request) {
       const form = await request.formData();
       title = String(form.get("title") || "").trim();
       content = String(form.get("content") || "").trim();
-      secret = String(form.get("secret") || "") === "on" || String(form.get("secret") || "") === "true";
       submittedPhone = normalizeInquiryPhone(String(form.get("authorPhone") || ""));
       const files = [...filesFromForm(form, "images"), ...filesFromForm(form, "files")];
       attachments = await attachmentsFromFiles(id, files);
@@ -127,7 +123,7 @@ export async function POST(request: Request) {
     id,
     title,
     content,
-    secret,
+    secret: true,
     authorUsername: viewer.username,
     authorName: viewer.name,
     authorPhone: viewer.isAdmin ? "" : viewer.phone || submittedPhone,
@@ -135,7 +131,12 @@ export async function POST(request: Request) {
     replies: [],
     createdAt: new Date().toISOString(),
   };
-  await saveInquiry(item);
+  try {
+    await saveInquiry(item);
+  } catch (error) {
+    console.error("[inquiries] 저장 실패", error);
+    return NextResponse.json({ error: "문의 저장에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+  }
   try {
     await sendInquiryNotice(item);
   } catch (error) {
