@@ -65,7 +65,7 @@ export async function GET(request: Request) {
   }
 
   const inline = type.startsWith("image/") || (access.canDownload && type.startsWith("video/"));
-  return new NextResponse(bytes, {
+  return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": type,
       "Content-Disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(pathname.split("/").pop() || "file")}`,
