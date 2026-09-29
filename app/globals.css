@@ -6334,6 +6334,21 @@ input {
   flex: 1;
 }
 
+.inquiry-delete-copy {
+  margin: 0;
+  color: var(--sub);
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.inquiry-delete-confirm {
+  background: #c4473a !important;
+}
+
+.inquiry-delete-confirm:hover {
+  filter: brightness(0.96);
+}
+
 .admin-filters {
   display: flex;
   flex-wrap: wrap;

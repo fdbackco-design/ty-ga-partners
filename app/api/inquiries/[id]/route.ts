@@ -4,6 +4,7 @@ import {
   MAX_INQUIRY_FILE_BYTES,
   attachmentKind,
   canManageInquiry,
+  canDeleteInquiry,
   canViewInquiry,
   isBlockedFile,
   safeFileName,
@@ -49,6 +50,7 @@ function publicPayload(item: NonNullable<Awaited<ReturnType<typeof getInquiry>>>
   return {
     item: toPublicInquiry(item, viewer),
     canManage: canManageInquiry(item, viewer),
+    canDelete: canDeleteInquiry(item, viewer),
   };
 }
 
@@ -156,11 +158,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const item = await getInquiry(id);
   if (!item) return NextResponse.json({ error: "문의를 찾을 수 없습니다." }, { status: 404 });
-  if (!canManageInquiry(item, viewer)) {
-    return NextResponse.json({ error: "작성자만 문의를 삭제할 수 있습니다." }, { status: 403 });
+  if (!canDeleteInquiry(item, viewer)) {
+    return NextResponse.json({ error: "작성자 또는 관리자만 문의를 삭제할 수 있습니다." }, { status: 403 });
   }
   try {
-    await removeInquiry(id);
+    const removed = await removeInquiry(id);
+    if (!removed) {
+      return NextResponse.json({ error: "문의 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+    }
   } catch (error) {
     console.error("[inquiries] 삭제 저장 실패", error);
     return NextResponse.json({ error: "문의 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });

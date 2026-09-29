@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canViewInquiry, inquiryAttachmentSrc, toInquirySummary, type Inquiry } from "./inquiries";
+import { canDeleteInquiry, canViewInquiry, inquiryAttachmentSrc, toInquirySummary, type Inquiry } from "./inquiries";
 
 const item: Inquiry = {
   id: "id-1",
@@ -34,6 +34,15 @@ describe("canViewInquiry", () => {
     expect(canViewInquiry(item, { isAdmin: false, username: "other", name: "다른사람", phone: "" })).toBe(false);
     expect(canViewInquiry(item, { isAdmin: false, username: "member1", name: "홍길동", phone: "" })).toBe(true);
     expect(canViewInquiry(item, { isAdmin: true, username: "admin", name: "관리자", phone: "" })).toBe(true);
+  });
+});
+
+describe("canDeleteInquiry", () => {
+  it("작성자와 관리자만 삭제할 수 있다", () => {
+    expect(canDeleteInquiry(item, null)).toBe(false);
+    expect(canDeleteInquiry(item, { isAdmin: false, username: "other", name: "다른사람", phone: "" })).toBe(false);
+    expect(canDeleteInquiry(item, { isAdmin: false, username: "member1", name: "홍길동", phone: "" })).toBe(true);
+    expect(canDeleteInquiry(item, { isAdmin: true, username: "admin", name: "관리자", phone: "" })).toBe(true);
   });
 });
 
