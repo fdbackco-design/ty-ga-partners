@@ -222,94 +222,92 @@ export default function InquiryDetail({ id }: { id: string }) {
 
   return (
     <div className="inquiry-ticket">
-      <header className="inquiry-ticket-head">
-        <p className="inquiry-ticket-crumb">
-          <Link href="/">홈</Link> / <Link href="/inquiries">문의 게시판</Link> / {item.title}
-        </p>
-        <div className="inquiry-ticket-title-row">
-          <div>
-            <div className="inquiry-ticket-tags">
-              {item.secret ? <span className="inquiry-lock">비밀</span> : null}
-              <span className={answered ? "inquiry-badge is-done" : "inquiry-badge"}>{answered ? "답변완료" : "대기"}</span>
-            </div>
-            <h1 className="inquiry-ticket-title">{item.title}</h1>
-            <p className="inquiry-ticket-date">
-              <span>작성일</span>
-              <time dateTime={item.createdAt}>{item.createdAt.slice(0, 10)}</time>
-            </p>
-          </div>
-          {showEdit || showDelete ? (
-            <div className="resource-detail-actions">
-              <div className="inquiry-detail-actions">
-                {showEdit ? (
-                  <Link href={`/inquiries/${id}/edit`} className="inquiry-edit-btn">
-                    수정
-                  </Link>
-                ) : null}
-                {showDelete ? (
-                  <button type="button" className="resource-delete-btn" onClick={openDeleteModal} disabled={deleting}>
-                    {deleting ? "삭제 중..." : "삭제"}
-                  </button>
-                ) : null}
+      <p className="inquiry-ticket-crumb">
+        <Link href="/">홈</Link> / <Link href="/inquiries">문의 게시판</Link> / {item.title}
+      </p>
+
+      <article className="inquiry-article">
+        <div className="inquiry-article-head">
+          <div className="inquiry-ticket-title-row">
+            <div>
+              <div className="inquiry-ticket-tags">
+                {item.secret ? <span className="inquiry-lock">비밀</span> : null}
+                <span className={answered ? "inquiry-badge is-done" : "inquiry-badge"}>{answered ? "답변완료" : "대기"}</span>
               </div>
-              {deleteError && !confirmDelete ? <p className="resource-detail-error">{deleteError}</p> : null}
+              <h1 className="inquiry-ticket-title">{item.title}</h1>
+            </div>
+            {showEdit || showDelete ? (
+              <div className="resource-detail-actions">
+                <div className="inquiry-detail-actions">
+                  {showEdit ? (
+                    <Link href={`/inquiries/${id}/edit`} className="inquiry-edit-btn">
+                      수정
+                    </Link>
+                  ) : null}
+                  {showDelete ? (
+                    <button type="button" className="resource-delete-btn" onClick={openDeleteModal} disabled={deleting}>
+                      {deleting ? "삭제 중..." : "삭제"}
+                    </button>
+                  ) : null}
+                </div>
+                {deleteError && !confirmDelete ? <p className="resource-detail-error">{deleteError}</p> : null}
+              </div>
+            ) : null}
+          </div>
+
+          <section className="inquiry-article-meta" aria-label="작성자 정보">
+            <div>
+              <span>작성자</span>
+              <strong>{item.authorName}</strong>
+            </div>
+            {isAdmin ? (
+              <div>
+                <span>연락처</span>
+                <strong>{phone || "-"}</strong>
+              </div>
+            ) : null}
+            <div>
+              <span>등록일</span>
+              <strong>{item.createdAt.slice(0, 10)}</strong>
+            </div>
+            <div>
+              <span>문의 상태</span>
+              <strong className={answered ? "is-done" : ""}>{answered ? "답변완료" : "대기"}</strong>
+            </div>
+          </section>
+        </div>
+
+        <section className="inquiry-ticket-body">
+          <p className="resource-content">{item.content}</p>
+          {images.length ? (
+            <div className="inquiry-images">
+              {images.map((file, index) => {
+                const src = inquiryAttachmentSrc(id, file, item.attachments.indexOf(file));
+                return (
+                  <a key={`${file.url}-${index}`} className="inquiry-thumb" href={src} target="_blank" rel="noreferrer">
+                    <img src={src} alt={file.name} />
+                    <span>{file.name}</span>
+                  </a>
+                );
+              })}
             </div>
           ) : null}
-        </div>
-      </header>
-
-      {isAdmin ? (
-        <section className="inquiry-customer-card" aria-label="고객 정보">
-          <div>
-            <span>작성자</span>
-            <strong>{item.authorName}</strong>
-          </div>
-          <div>
-            <span>연락처</span>
-            <strong>{phone || "-"}</strong>
-          </div>
-          <div>
-            <span>등록일</span>
-            <strong>{item.createdAt.slice(0, 10)}</strong>
-          </div>
-          <div>
-            <span>문의 상태</span>
-            <strong className={answered ? "is-done" : ""}>{answered ? "답변완료" : "대기"}</strong>
-          </div>
+          {files.length ? (
+            <ul className="inquiry-files">
+              {files.map((file, index) => {
+                const src = inquiryAttachmentSrc(id, file, item.attachments.indexOf(file));
+                return (
+                  <li key={`${file.url}-${index}`}>
+                    <a href={src} download={file.name}>
+                      {file.name} 내려받기 ({formatFileSize(file.size)})
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
         </section>
-      ) : null}
-
-      <section className="inquiry-ticket-body">
-        <h2>문의 내용</h2>
-        <p className="resource-content">{item.content}</p>
-        {images.length ? (
-          <div className="inquiry-images">
-            {images.map((file, index) => {
-              const src = inquiryAttachmentSrc(id, file, item.attachments.indexOf(file));
-              return (
-                <a key={`${file.url}-${index}`} className="inquiry-thumb" href={src} target="_blank" rel="noreferrer">
-                  <img src={src} alt={file.name} />
-                  <span>{file.name}</span>
-                </a>
-              );
-            })}
-          </div>
-        ) : null}
-        {files.length ? (
-          <ul className="inquiry-files">
-            {files.map((file, index) => {
-              const src = inquiryAttachmentSrc(id, file, item.attachments.indexOf(file));
-              return (
-                <li key={`${file.url}-${index}`}>
-                  <a href={src} download={file.name}>
-                    {file.name} 내려받기 ({formatFileSize(file.size)})
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </section>
+      </article>
 
       <section className="inquiry-replies">
         <h2>관리자 답변</h2>

@@ -2,6 +2,29 @@ export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 export const MAX_RESOURCE_FILES = 8;
 export const MAX_RESOURCE_CATEGORY_NAME = 20;
 
+export function mergePickedFiles<T extends { name: string; size: number; lastModified?: number }>(
+  current: T[],
+  incoming: T[],
+  max = MAX_RESOURCE_FILES,
+) {
+  const next = [...current];
+  for (const file of incoming) {
+    if (next.length >= max) break;
+    if (
+      next.some(
+        (row) =>
+          row.name === file.name &&
+          row.size === file.size &&
+          (row.lastModified ?? 0) === (file.lastModified ?? 0),
+      )
+    ) {
+      continue;
+    }
+    next.push(file);
+  }
+  return next;
+}
+
 export type ResourceFile = {
   name: string;
   url: string;

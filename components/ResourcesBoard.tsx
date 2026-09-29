@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   fileKindLabel,
@@ -21,8 +21,6 @@ export default function ResourcesBoard() {
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [categoryPending, setCategoryPending] = useState(false);
 
   async function load() {
     const res = await fetch("/api/resources", { cache: "no-store" });
@@ -55,39 +53,6 @@ export default function ResourcesBoard() {
       return;
     }
     await load();
-  }
-
-  async function onAddCategory(e: FormEvent) {
-    e.preventDefault();
-    const name = newCategory.trim();
-    if (!name) return;
-    setCategoryPending(true);
-    setError("");
-    const res = await fetch("/api/resources/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    const json = (await res.json()) as { error?: string; items?: ResourceCategory[] };
-    setCategoryPending(false);
-    if (!res.ok) {
-      setError(json.error || "분류를 추가하지 못했습니다.");
-      return;
-    }
-    setCategories(json.items || []);
-    setNewCategory("");
-  }
-
-  async function onDeleteCategory(id: string) {
-    if (!confirm("이 분류를 삭제할까요? 이미 등록된 자료의 분류 이름은 그대로 남습니다.")) return;
-    const res = await fetch(`/api/resources/categories/${id}`, { method: "DELETE" });
-    const json = (await res.json()) as { error?: string; items?: ResourceCategory[] };
-    if (!res.ok) {
-      setError(json.error || "분류를 삭제하지 못했습니다.");
-      return;
-    }
-    setCategories(json.items || []);
-    if (category && !json.items?.some((item) => item.name === category)) setCategory("");
   }
 
   const filterNames = useMemo(() => {
@@ -126,45 +91,15 @@ export default function ResourcesBoard() {
   return (
     <section className="resource-board">
       {loaded && !canDownload ? (
-        <div className="resource-gate resource-gate-inline">
-          <p>자료 조회는 가능합니다. 영상·자료 다운로드는 사원 코드 발급 회원만 이용할 수 있습니다.</p>
-          <Link href="/partners/apply" className="btn-apply">
-            무료 코드 발급받기
+        <div className="resource-issue-bar">
+          <div className="resource-issue-bar-copy">
+            <strong>자료 다운로드 안내</strong>
+            <p>영상·자료 조회 및 다운로드는 사원코드 발급 후 이용할 수 있습니다.</p>
+          </div>
+          <Link href="/partners/apply" className="resource-issue-bar-cta">
+            사원코드 무료 발급 →
           </Link>
         </div>
-      ) : null}
-
-      {ready && isAdmin ? (
-        <form className="resource-category-admin" onSubmit={onAddCategory}>
-          <p>분류 관리</p>
-          <div className="resource-category-admin-row">
-            <input
-              type="text"
-              value={newCategory}
-              maxLength={20}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="새 분류 이름"
-              aria-label="새 분류 이름"
-            />
-            <button type="submit" className="file-pick-btn" disabled={categoryPending}>
-              {categoryPending ? "추가 중..." : "분류 추가"}
-            </button>
-          </div>
-          {categories.length ? (
-            <ul>
-              {categories.map((item) => (
-                <li key={item.id}>
-                  <span>{item.name}</span>
-                  <button type="button" onClick={() => void onDeleteCategory(item.id)}>
-                    삭제
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <span className="resource-category-empty">등록된 분류가 없습니다. 위에서 추가하면 글 작성 시 선택할 수 있습니다.</span>
-          )}
-        </form>
       ) : null}
 
       <div className="resource-board-bar">

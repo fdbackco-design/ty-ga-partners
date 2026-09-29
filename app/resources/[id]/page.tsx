@@ -102,10 +102,13 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
           </header>
 
           {!access.canDownload ? (
-            <div className="resource-gate resource-gate-inline">
-              <p>본문은 확인할 수 있습니다. 영상 재생과 파일 다운로드는 사원 코드 발급 후 이용할 수 있습니다.</p>
-              <Link href="/partners/apply" className="btn-apply">
-                무료 코드 발급받기
+            <div className="resource-issue-bar">
+              <div className="resource-issue-bar-copy">
+                <strong>자료 다운로드 안내</strong>
+                <p>파일 다운로드는 사원 코드 발급 후 이용할 수 있습니다.</p>
+              </div>
+              <Link href="/partners/apply" className="resource-issue-bar-cta">
+                사원코드 무료 발급 →
               </Link>
             </div>
           ) : null}

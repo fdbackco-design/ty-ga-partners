@@ -6,6 +6,7 @@ import {
   isSafeResourceFilePath,
   normalizeStoredResource,
   publicResource,
+  mergePickedFiles,
   resourceFileSrc,
   sanitizeCategoryName,
   type ResourcePost,
@@ -87,5 +88,25 @@ describe("resource posts", () => {
     expect(sanitizeCategoryName("  교육 자료  ")).toBe("교육 자료");
     expect(sanitizeCategoryName("")).toBe("");
     expect(sanitizeCategoryName("가".repeat(21))).toBe("");
+  });
+});
+
+describe("mergePickedFiles", () => {
+  it("keeps existing files and appends newly picked ones", () => {
+    const current = [{ name: "a.pdf", size: 10, lastModified: 1 }];
+    const incoming = [
+      { name: "b.pdf", size: 20, lastModified: 2 },
+      { name: "c.pdf", size: 30, lastModified: 3 },
+    ];
+    expect(mergePickedFiles(current, incoming).map((file) => file.name)).toEqual(["a.pdf", "b.pdf", "c.pdf"]);
+  });
+
+  it("skips duplicates and respects the max count", () => {
+    const current = [{ name: "a.pdf", size: 10, lastModified: 1 }];
+    const incoming = [
+      { name: "a.pdf", size: 10, lastModified: 1 },
+      { name: "b.pdf", size: 20, lastModified: 2 },
+    ];
+    expect(mergePickedFiles(current, incoming, 1).map((file) => file.name)).toEqual(["a.pdf"]);
   });
 });
