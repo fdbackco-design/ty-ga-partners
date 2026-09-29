@@ -162,10 +162,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "작성자 또는 관리자만 문의를 삭제할 수 있습니다." }, { status: 403 });
   }
   try {
-    const removed = await removeInquiry(id);
-    if (!removed) {
-      return NextResponse.json({ error: "문의 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
-    }
+    await removeInquiry(id);
   } catch (error) {
     console.error("[inquiries] 삭제 저장 실패", error);
     return NextResponse.json({ error: "문의 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });

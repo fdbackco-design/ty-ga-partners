@@ -13,6 +13,7 @@ import {
   patchApplication,
   writeAuditLog,
 } from "@/lib/partnerApplicationsStore";
+import { decryptSecret } from "@/lib/crypto";
 import type { PartnerApplication, PartnerApplicationStatus } from "@/lib/partnerApplication";
 import type { StoredUser } from "@/lib/usersStore";
 
@@ -49,6 +50,13 @@ export async function runEmployeeIssue(input: {
   });
 
   if (application.status === "ISSUED") {
+    if (application.ssnBackEnc) {
+      try {
+        await patchApplication(application.id, { ssn_back_enc: null });
+      } catch {
+        // 발급은 완료된 상태이므로 암호문 정리 실패는 재시도하지 않는다.
+      }
+    }
     return { ok: true, status: "ISSUED", empCode: application.empCode || "", already: true };
   }
   if (application.status === "NEEDS_MANUAL_CHECK" && actor.kind !== "admin") {
@@ -71,10 +79,17 @@ export async function runEmployeeIssue(input: {
 
   const issuedSameId = await getIssuedApplicationByEmpId(user.username);
   const empSsn1 = (application.certBirthdate || "").slice(2) || user.rrnFront;
+  let empSsn2 = "";
+  try {
+    empSsn2 = application.ssnBackEnc ? decryptSecret(application.ssnBackEnc) : "";
+  } catch {
+    return { ok: false, http: 400, error: "주민등록번호 뒷자리를 확인할 수 없습니다.", status: application.status };
+  }
   const validated = validateIssueFields({
     application,
     empId: user.username,
     empSsn1,
+    empSsn2,
     issuedEmpIdTaken: Boolean(issuedSameId && issuedSameId.id !== application.id),
   });
   if (!validated.ok) {
@@ -141,6 +156,7 @@ export async function runEmployeeIssue(input: {
         issued_at: new Date().toISOString(),
         last_error_code: 0,
         last_error_message: null,
+        ssn_back_enc: null,
       });
       await writeAuditLog({
         applicationId: application.id,

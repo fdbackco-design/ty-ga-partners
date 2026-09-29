@@ -74,14 +74,13 @@ describe("statusAfterCertUpdate", () => {
 });
 
 describe("toApiSsn2", () => {
-  it("성별코드 1자리 뒤에 0을 채운다", () => {
-    expect(toApiSsn2("2")).toBe("2000000");
-    expect(toApiSsn2("1")).toBe("1000000");
-    expect(toApiSsn2("3")).toBe("3000000");
+  it("입력받은 뒷자리 7자리를 그대로 반환한다", () => {
+    expect(toApiSsn2("2234567")).toBe("2234567");
+    expect(toApiSsn2("1-234567")).toBe("1234567");
   });
 
-  it("하이픈이나 전체 주민번호를 만들지 않는다", () => {
-    expect(toApiSsn2("2")).not.toContain("-");
-    expect(toApiSsn2("2")).toHaveLength(7);
+  it("7자리가 아니면 비운다", () => {
+    expect(toApiSsn2("2")).toBe("");
+    expect(toApiSsn2("200000")).toBe("");
   });
 });

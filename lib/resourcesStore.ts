@@ -1,7 +1,13 @@
 import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import path from "path";
-import { del, list, put } from "@vercel/blob";
-import { type ResourcePost, encodeResourcePathSegment } from "@/lib/resources";
+import {
+  type ResourcePost,
+  encodeResourcePathSegment,
+  isSafeResourceBlobPath,
+  normalizeStoredResource,
+  resourceStoredFilePath,
+} from "@/lib/resources";
+import { delBlobFile, getBlobJson, putBlobFile } from "@/lib/blobStore";
 
 const INDEX_PATH = path.join(process.cwd(), "data", "resources.json");
 const BLOB_INDEX = "resources/index.json";
@@ -10,11 +16,14 @@ function useBlob() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
+function normalizeList(items: ResourcePost[] | null | undefined) {
+  return Array.isArray(items) ? items.map(normalizeStoredResource) : [];
+}
+
 async function readLocal(): Promise<ResourcePost[]> {
   try {
     const raw = await readFile(INDEX_PATH, "utf8");
-    const parsed = JSON.parse(raw) as ResourcePost[];
-    return Array.isArray(parsed) ? parsed : [];
+    return normalizeList(JSON.parse(raw) as ResourcePost[]);
   } catch {
     return [];
   }
@@ -26,25 +35,15 @@ async function writeLocal(items: ResourcePost[]) {
 }
 
 async function readBlob(): Promise<ResourcePost[]> {
-  try {
-    const { blobs } = await list({ prefix: BLOB_INDEX });
-    const file = blobs.find((item) => item.pathname === BLOB_INDEX);
-    if (!file) return [];
-    const res = await fetch(file.url, { cache: "no-store" });
-    if (!res.ok) return [];
-    const parsed = (await res.json()) as ResourcePost[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return normalizeList(await getBlobJson<ResourcePost[]>(BLOB_INDEX));
 }
 
 async function writeBlob(items: ResourcePost[]) {
-  await put(BLOB_INDEX, JSON.stringify(items), {
-    access: "public",
+  await putBlobFile(BLOB_INDEX, JSON.stringify(items), {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
+    cacheControlMaxAge: 60,
   });
 }
 
@@ -58,11 +57,31 @@ export async function getResource(id: string) {
 }
 
 export async function saveResource(item: ResourcePost) {
+  const normalized = normalizeStoredResource(item);
   const items = useBlob() ? await readBlob() : await readLocal();
-  const next = [item, ...items.filter((row) => row.id !== item.id)];
+  const next = [normalized, ...items.filter((row) => row.id !== normalized.id)];
   if (useBlob()) await writeBlob(next);
   else await writeLocal(next);
-  return item;
+  return normalized;
+}
+
+async function deleteStoredFile(url: string) {
+  const pathname = resourceStoredFilePath(url);
+  if (isSafeResourceBlobPath(pathname)) {
+    try {
+      await delBlobFile(pathname);
+    } catch {
+      // ignore missing blob
+    }
+    return;
+  }
+  if (pathname.startsWith("uploads/resources/")) {
+    try {
+      await unlink(path.join(process.cwd(), "public", pathname));
+    } catch {
+      // ignore missing file
+    }
+  }
 }
 
 export async function removeResource(id: string) {
@@ -70,25 +89,10 @@ export async function removeResource(id: string) {
   const target = items.find((item) => item.id === id);
   if (!target) return null;
   const next = items.filter((item) => item.id !== id);
-  if (useBlob()) {
-    await writeBlob(next);
-    if (target.fileUrl.includes("blob.vercel-storage.com") || target.fileUrl.includes("vercel-storage.com")) {
-      try {
-        await del(target.fileUrl);
-      } catch {
-        // ignore missing blob
-      }
-    }
-  } else {
-    await writeLocal(next);
-    if (target.fileUrl.startsWith("/uploads/")) {
-      try {
-        await unlink(path.join(process.cwd(), "public", target.fileUrl.replace(/^\//, "")));
-      } catch {
-        // ignore missing file
-      }
-    }
-  }
+  if (useBlob()) await writeBlob(next);
+  else await writeLocal(next);
+  const urls = [...target.files.map((file) => file.url), target.fileUrl].filter(Boolean);
+  await Promise.all([...new Set(urls)].map((url) => deleteStoredFile(url)));
   return target;
 }
 

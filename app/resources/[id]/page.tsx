@@ -2,12 +2,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ResourceContent from "@/components/ResourceContent";
 import ResourceDeleteButton from "@/components/ResourceDeleteButton";
-import { formatFileSize, isPlayableVideo, videoMimeType } from "@/lib/resources";
+import { getResourceAccess } from "@/lib/resourceAccess";
+import {
+  formatFileSize,
+  isPlayableVideo,
+  resourceFileSrc,
+  resourceHasVideo,
+  videoMimeType,
+} from "@/lib/resources";
 import { getResource } from "@/lib/resourcesStore";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const access = await getResourceAccess();
+  if (!access.canView) return { title: "자료실" };
   const { id } = await params;
   const item = await getResource(id);
   return {
@@ -42,10 +51,33 @@ function DownloadIcon() {
 
 export default async function ResourceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const access = await getResourceAccess();
+  if (!access.canView) {
+    return (
+      <main className="legal-page resource-article-page">
+        <div className="wrap">
+          <p className="resource-article-crumb">
+            <Link href="/">홈</Link> / <Link href="/resources">자료실</Link>
+          </p>
+          <h1 className="resource-index-title">자료실</h1>
+          <div className="resource-gate">
+            <p>로그인 후 자료를 확인할 수 있습니다.</p>
+            <Link href={`/login?next=/resources/${id}`} className="btn-apply">
+              로그인
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const item = await getResource(id);
   if (!item) notFound();
 
-  const fileLabel = fileExtLabel(item.fileName);
+  const files = item.files;
+  const playable = access.canDownload
+    ? files.filter((file) => isPlayableVideo(file.name) && file.url)
+    : [];
 
   return (
     <main className="legal-page resource-article-page">
@@ -57,8 +89,8 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
           <header className="resource-article-head">
             <div className="resource-article-top">
               <div className="resource-article-tags">
-                <span className="resource-article-cat">자료실</span>
-                {isPlayableVideo(item.fileName) ? <span className="resource-video-badge">영상</span> : null}
+                <span className="resource-article-cat">{item.category || "자료실"}</span>
+                {resourceHasVideo(item) ? <span className="resource-video-badge">영상</span> : null}
               </div>
               <ResourceDeleteButton id={item.id} />
             </div>
@@ -69,40 +101,62 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
             </p>
           </header>
 
+          {!access.canDownload ? (
+            <div className="resource-gate resource-gate-inline">
+              <p>본문은 확인할 수 있습니다. 영상 재생과 파일 다운로드는 사원 코드 발급 후 이용할 수 있습니다.</p>
+              <Link href="/partners/apply" className="btn-apply">
+                무료 코드 발급받기
+              </Link>
+            </div>
+          ) : null}
+
           <div className="resource-article-body">
             <ResourceContent content={item.content} />
-            {item.fileUrl && isPlayableVideo(item.fileName) ? (
-              <div className="resource-video">
-                <video controls playsInline preload="metadata" aria-label={item.title}>
-                  <source src={item.fileUrl} type={videoMimeType(item.fileName)} />
-                  이 브라우저에서는 영상을 재생할 수 없습니다. 아래 버튼으로 내려받아 주세요.
-                </video>
-              </div>
-            ) : null}
+            {playable.map((file) => {
+              const src = resourceFileSrc(file.url);
+              return (
+                <div key={file.url} className="resource-video">
+                  <video controls playsInline preload="metadata" aria-label={file.name}>
+                    <source src={src} type={videoMimeType(file.name)} />
+                    이 브라우저에서는 영상을 재생할 수 없습니다. 아래 버튼으로 내려받아 주세요.
+                  </video>
+                </div>
+              );
+            })}
           </div>
 
-          {item.fileUrl ? (
+          {files.length ? (
             <div className="resource-article-files">
-              <div className="resource-file-card">
-                <span className="resource-file-icon">
-                  <FileTypeIcon />
-                </span>
-                <div className="resource-file-copy">
-                  <strong>{item.fileName}</strong>
-                  <span>
-                    {fileLabel} / {formatFileSize(item.fileSize)}
-                  </span>
-                </div>
-                <a
-                  className="resource-file-download"
-                  href={item.fileUrl}
-                  download={item.fileName}
-                  aria-label={`${item.fileName} 내려받기 (${formatFileSize(item.fileSize)})`}
-                >
-                  <DownloadIcon />
-                  다운로드
-                </a>
-              </div>
+              {files.map((file) => {
+                const src = access.canDownload && file.url ? resourceFileSrc(file.url) : "";
+                const label = fileExtLabel(file.name);
+                return (
+                  <div key={`${file.name}-${file.size}`} className="resource-file-card">
+                    <span className="resource-file-icon">
+                      <FileTypeIcon />
+                    </span>
+                    <div className="resource-file-copy">
+                      <strong>{file.name}</strong>
+                      <span>
+                        {label} / {formatFileSize(file.size)}
+                      </span>
+                    </div>
+                    {src ? (
+                      <a
+                        className="resource-file-download"
+                        href={src}
+                        download={file.name}
+                        aria-label={`${file.name} 내려받기 (${formatFileSize(file.size)})`}
+                      >
+                        <DownloadIcon />
+                        다운로드
+                      </a>
+                    ) : (
+                      <span className="resource-file-locked">다운로드 불가</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </article>

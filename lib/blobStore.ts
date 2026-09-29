@@ -1,4 +1,4 @@
-import { get, list, put } from "@vercel/blob";
+import { del, get, put } from "@vercel/blob";
 
 type BlobAccess = "public" | "private";
 
@@ -10,6 +10,7 @@ function putOptions(
     addRandomSuffix?: boolean;
     allowOverwrite?: boolean;
     contentType?: string;
+    cacheControlMaxAge?: number;
   },
 ) {
   return { ...options, access };
@@ -22,6 +23,7 @@ export async function putBlobFile(
     addRandomSuffix?: boolean;
     allowOverwrite?: boolean;
     contentType?: string;
+    cacheControlMaxAge?: number;
   },
 ) {
   let lastError: unknown;
@@ -38,7 +40,7 @@ export async function putBlobFile(
 export async function getBlobResult(pathname: string) {
   for (const access of ACCESS_ORDER) {
     try {
-      const result = await get(pathname, { access });
+      const result = await get(pathname, { access, useCache: false });
       if (result?.statusCode === 200 && result.stream) return result;
     } catch {
       // store access mode may not match; try the other
@@ -49,23 +51,19 @@ export async function getBlobResult(pathname: string) {
 
 export async function getBlobJson<T>(pathname: string): Promise<T | null> {
   const result = await getBlobResult(pathname);
-  if (result?.stream) {
-    try {
-      const parsed = JSON.parse(Buffer.from(await new Response(result.stream).arrayBuffer()).toString("utf8")) as T;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
+  if (!result?.stream) return null;
   try {
-    const { blobs } = await list({ prefix: pathname });
-    const file = blobs.find((item) => item.pathname === pathname);
-    if (!file) return null;
-    const res = await fetch(file.url, { cache: "no-store" });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
+    return JSON.parse(Buffer.from(await new Response(result.stream).arrayBuffer()).toString("utf8")) as T;
   } catch {
     return null;
+  }
+}
+
+export async function delBlobFile(pathname: string) {
+  try {
+    await del(pathname);
+  } catch {
+    // missing blobs are treated as already deleted
   }
 }
 

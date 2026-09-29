@@ -14,10 +14,15 @@ export async function POST(request: Request) {
     const json = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async () => ({
-        maximumSizeInBytes: MAX_FILE_BYTES,
-        addRandomSuffix: true,
-      }),
+      onBeforeGenerateToken: async (pathname) => {
+        if (!pathname.startsWith("resources/")) {
+          throw new Error("허용되지 않는 업로드 경로입니다.");
+        }
+        return {
+          maximumSizeInBytes: MAX_FILE_BYTES,
+          addRandomSuffix: true,
+        };
+      },
     });
     return NextResponse.json(json);
   } catch (error) {

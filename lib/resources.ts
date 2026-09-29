@@ -1,14 +1,94 @@
 export const MAX_FILE_BYTES = 50 * 1024 * 1024;
+export const MAX_RESOURCE_FILES = 8;
+export const MAX_RESOURCE_CATEGORY_NAME = 20;
+
+export type ResourceFile = {
+  name: string;
+  url: string;
+  size: number;
+};
 
 export type ResourcePost = {
   id: string;
   title: string;
   content: string;
+  category: string;
+  files: ResourceFile[];
   fileName: string;
   fileUrl: string;
   fileSize: number;
   createdAt: string;
 };
+
+export type ResourceCategory = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
+export function normalizeResourceFiles(item: {
+  files?: ResourceFile[];
+  fileName?: string;
+  fileUrl?: string;
+  fileSize?: number;
+}): ResourceFile[] {
+  if (Array.isArray(item.files) && item.files.length) {
+    return item.files
+      .filter((file) => file && String(file.url || "").trim())
+      .slice(0, MAX_RESOURCE_FILES)
+      .map((file) => ({
+        name: String(file.name || "file"),
+        url: String(file.url),
+        size: Number(file.size || 0),
+      }));
+  }
+  const url = String(item.fileUrl || "").trim();
+  if (!url) return [];
+  return [{ name: String(item.fileName || "file"), url, size: Number(item.fileSize || 0) }];
+}
+
+export function normalizeStoredResource(item: ResourcePost): ResourcePost {
+  const files = normalizeResourceFiles(item);
+  return {
+    ...item,
+    category: String(item.category || "").trim(),
+    files,
+    fileName: files[0]?.name || "",
+    fileUrl: files[0]?.url || "",
+    fileSize: files[0]?.size || 0,
+  };
+}
+
+export function publicResource(item: ResourcePost, canDownload: boolean): ResourcePost {
+  const normalized = normalizeStoredResource(item);
+  if (canDownload) return normalized;
+  return {
+    ...normalized,
+    files: normalized.files.map((file) => ({ ...file, url: "" })),
+    fileUrl: "",
+  };
+}
+
+export function resourceHasVideo(item: ResourcePost) {
+  return normalizeResourceFiles(item).some((file) => isPlayableVideo(file.name));
+}
+
+export function fileKindLabel(item: ResourcePost) {
+  const files = normalizeResourceFiles(item);
+  if (!files.length) return "";
+  if (files.some((file) => isPlayableVideo(file.name))) {
+    return files.length > 1 ? `영상 외 ${files.length - 1}` : "영상";
+  }
+  if (files.length > 1) return `첨부 ${files.length}`;
+  const ext = files[0].name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  return ext || "첨부";
+}
+
+export function sanitizeCategoryName(name: string) {
+  const trimmed = String(name || "").trim().replace(/\s+/g, " ");
+  if (!trimmed || trimmed.length > MAX_RESOURCE_CATEGORY_NAME) return "";
+  return trimmed;
+}
 
 export function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes}B`;
@@ -57,9 +137,73 @@ export function isResourceImageFile(fileName: string, mime?: string) {
   return /\.(jpe?g|png|gif|webp|bmp)$/i.test(fileName);
 }
 
+export function resourceBlobPathnameFromUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("blob.vercel-storage.com")) return "";
+    return decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+  } catch {
+    return "";
+  }
+}
+
+export function isSafeResourceBlobPath(pathname: string) {
+  if (!pathname || pathname.includes("..") || pathname.includes("\\") || pathname.startsWith("/")) return false;
+  return pathname.startsWith("resources/");
+}
+
+export function isSafeResourceFilePath(pathname: string) {
+  if (!pathname || pathname.includes("..") || pathname.includes("\\") || pathname.startsWith("/")) return false;
+  return pathname.startsWith("resources/") || pathname.startsWith("uploads/resources/");
+}
+
+export function resourceFileSrc(url: string, pathname?: string) {
+  if (!url) return url;
+  if (url.startsWith("/api/resources/file")) return url;
+  if (url.startsWith("/uploads/resources/")) {
+    const stored = decodeResourcePath(url.replace(/^\//, ""));
+    return `/api/resources/file?path=${encodeURIComponent(stored)}`;
+  }
+  const path = pathname || resourceBlobPathnameFromUrl(url);
+  if (!isSafeResourceBlobPath(path)) return url;
+  return `/api/resources/file?path=${encodeURIComponent(path)}`;
+}
+
+export function resourceStoredBlobPath(url: string) {
+  return resourceStoredFilePath(url);
+}
+
+export function resourceStoredFilePath(url: string) {
+  if (url.startsWith("/uploads/resources/")) return decodeResourcePath(url.replace(/^\//, ""));
+  if (url.startsWith("/api/resources/file")) {
+    try {
+      return new URL(url, "https://www.ty-ga-partners.com").searchParams.get("path") || "";
+    } catch {
+      return "";
+    }
+  }
+  return resourceBlobPathnameFromUrl(url);
+}
+
+function decodeResourcePath(pathname: string) {
+  try {
+    return decodeURIComponent(pathname);
+  } catch {
+    return pathname;
+  }
+}
+
 export function isAllowedResourceImageSrc(src: string) {
   if (!src || src.startsWith("javascript:") || src.startsWith("data:")) return false;
   if (src.startsWith("/uploads/resources/")) return true;
+  if (src.startsWith("/api/resources/file")) {
+    try {
+      const path = new URL(src, "https://www.ty-ga-partners.com").searchParams.get("path") || "";
+      return isSafeResourceFilePath(path);
+    } catch {
+      return false;
+    }
+  }
   try {
     const url = new URL(src);
     if (url.protocol !== "http:" && url.protocol !== "https:") return false;

@@ -27,9 +27,10 @@ export function birthdateFromRrn(rrnFront: string, rrnBackFirst: string): string
 }
 
 /**
- * TY 전산에는 주민번호 뒤 1자리(성별코드)만 전송하고 나머지는 0으로 채운다.
- * 계약서 PDF에는 뒤 7자리 전체가 인쇄된다 — 규칙이 서로 다르니 혼동 금지.
+ * TY 사원등록 empSsn2는 계약에서 입력받은 뒷자리 7자리 그대로 보낸다.
+ * 우리 DB·감사로그에는 이 값을 저장하지 않고 마스킹만 남긴다.
  */
-export function toApiSsn2(genderCode: string): string {
-  return genderCode.padEnd(7, "0");
+export function toApiSsn2(ssnBack: string): string {
+  const digits = String(ssnBack || "").replace(/\D/g, "");
+  return /^\d{7}$/.test(digits) ? digits : "";
 }
