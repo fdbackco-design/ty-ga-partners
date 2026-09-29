@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { partnerStatusLabel } from "@/lib/partnerApplication";
 
 type Detail = {
   application: {
@@ -86,7 +87,7 @@ export default function PartnerAdminDetail({ initial }: { initial: Detail }) {
       <dl className="partner-apply-id">
         <div>
           <dt>상태</dt>
-          <dd>{app.status}</dd>
+          <dd>{partnerStatusLabel(app.status)}</dd>
         </div>
         <div>
           <dt>성명</dt>

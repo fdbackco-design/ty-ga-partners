@@ -16,7 +16,7 @@ export default async function AdminChannelsPage() {
     <main className="legal-page">
       <div className="wrap">
         <p className="text-sm text-[var(--sub)]">
-          <Link href="/">홈</Link> / <Link href="/admin/partners">파트너 신청</Link> / 채널 관리
+          <Link href="/">홈</Link> / 채널 관리
         </p>
         <h1 className="legal-title">채널 관리</h1>
         <p className="mt-3 text-[var(--sub)]">

@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { digitsOnly, validatePassword, validatePhone } from "@/lib/auth";
 import { MEMBER_COOKIE, createMemberToken, memberCookieOptions, memberSessionFromUser } from "@/lib/member";
+import { MEMBER_WITHDRAW_BLOCKED, memberWithdrawBlocked } from "@/lib/memberWithdraw";
 import { getSignedInMemberUser } from "@/lib/partnerAccess";
 import { getApplicationByUserId, phoneChangeLocked } from "@/lib/partnerApplicationsStore";
 import { VERIFY_COOKIE, verifyCookieOptions } from "@/lib/partnerVerifyToken";
-import { listPhoneHistory, findUserById, toProfile, updateUserPassword, updateUserPhone } from "@/lib/usersStore";
+import {
+  deleteUser,
+  listPhoneHistory,
+  findUserById,
+  toProfile,
+  updateUserPassword,
+  updateUserPhone,
+} from "@/lib/usersStore";
 
 export const runtime = "nodejs";
 
@@ -91,6 +99,43 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "변경할 항목이 없습니다." }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "회원 정보 변경에 실패했습니다.";
+    if (message.includes("현재 비밀번호가 올바르지 않습니다")) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+    const status = message.includes("Supabase가 설정되지 않았습니다") || message.includes("마이그레이션") ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const user = await getSignedInMemberUser();
+  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+
+  let body: { password?: string; confirmed?: boolean };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "요청 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+
+  const password = String(body.password || "");
+  if (!password) return NextResponse.json({ error: "현재 비밀번호를 입력해 주세요." }, { status: 400 });
+  if (!body.confirmed) {
+    return NextResponse.json({ error: "회원탈퇴에 동의해 주세요." }, { status: 400 });
+  }
+
+  try {
+    const application = await getApplicationByUserId(user.id);
+    if (memberWithdrawBlocked(application)) {
+      return NextResponse.json({ error: MEMBER_WITHDRAW_BLOCKED }, { status: 403 });
+    }
+    await deleteUser(user.id, password);
+    const res = NextResponse.json({ ok: true });
+    res.cookies.set(MEMBER_COOKIE, "", { ...memberCookieOptions(), maxAge: 0 });
+    res.cookies.set(VERIFY_COOKIE, "", { ...verifyCookieOptions(), maxAge: 0 });
+    return res;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "회원탈퇴에 실패했습니다.";
     if (message.includes("현재 비밀번호가 올바르지 않습니다")) {
       return NextResponse.json({ error: message }, { status: 400 });
     }

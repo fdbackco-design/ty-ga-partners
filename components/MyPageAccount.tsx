@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly, formatPhoneDisplay } from "@/lib/auth";
@@ -17,15 +18,17 @@ export default function MyPageAccount({
   name,
   phone,
   phoneLocked,
+  withdrawLocked,
   phoneHistory,
 }: {
   username: string;
   name: string;
   phone: string;
   phoneLocked: boolean;
+  withdrawLocked: boolean;
   phoneHistory: PhoneHistoryItem[];
 }) {
-  const { refreshMember } = useAuth();
+  const { logout, refreshMember } = useAuth();
   const [currentPhone, setCurrentPhone] = useState(phone);
   const [history, setHistory] = useState(phoneHistory);
   const [locked, setLocked] = useState(phoneLocked);
@@ -39,6 +42,10 @@ export default function MyPageAccount({
   const [passwordError, setPasswordError] = useState("");
   const [passwordOk, setPasswordOk] = useState("");
   const [passwordPending, setPasswordPending] = useState(false);
+  const [withdrawPassword, setWithdrawPassword] = useState("");
+  const [withdrawAgreed, setWithdrawAgreed] = useState(false);
+  const [withdrawError, setWithdrawError] = useState("");
+  const [withdrawPending, setWithdrawPending] = useState(false);
 
   async function onPhoneSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -98,6 +105,40 @@ export default function MyPageAccount({
       setPasswordError("비밀번호를 바꾸지 못했습니다.");
     } finally {
       setPasswordPending(false);
+    }
+  }
+
+  async function onWithdrawSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (withdrawLocked || withdrawPending) return;
+    setWithdrawError("");
+    if (!withdrawPassword) {
+      setWithdrawError("현재 비밀번호를 입력해 주세요.");
+      return;
+    }
+    if (!withdrawAgreed) {
+      setWithdrawError("회원탈퇴에 동의해 주세요.");
+      return;
+    }
+    if (!confirm("회원탈퇴를 진행할까요? 계정 정보는 삭제되며 되돌릴 수 없습니다.")) return;
+    setWithdrawPending(true);
+    try {
+      const res = await fetch("/api/member/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: withdrawPassword, confirmed: true }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setWithdrawError(data.error || "회원탈퇴에 실패했습니다.");
+        return;
+      }
+      logout();
+      window.location.assign("/");
+    } catch {
+      setWithdrawError("회원탈퇴에 실패했습니다.");
+    } finally {
+      setWithdrawPending(false);
     }
   }
 
@@ -205,6 +246,56 @@ export default function MyPageAccount({
         <button type="submit" className="btn-apply w-full mt-7 h-[56px] text-[18px]" disabled={passwordPending}>
           {passwordPending ? "변경 중..." : "비밀번호 변경"}
         </button>
+      </form>
+
+      <form className="form-card mypage-withdraw" onSubmit={(e) => void onWithdrawSubmit(e)}>
+        <h2 className="mypage-section-title">회원탈퇴</h2>
+        {withdrawLocked ? (
+          <>
+            <p className="partner-apply-hint">
+              위촉계약이 체결되었거나 사원코드가 발급된 계정은 마이페이지에서 탈퇴할 수 없습니다.
+            </p>
+            <p className="mt-3 text-sm text-[var(--sub)]">
+              해촉이 필요하시면{" "}
+              <Link href="/release-request" className="mypage-withdraw-link">
+                해촉 신청
+              </Link>
+              을 이용해 주세요.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-[var(--sub)]">
+              탈퇴하면 계정과 가입 정보가 삭제되며 복구할 수 없습니다. 본인 확인을 위해 현재 비밀번호를 입력해 주세요.
+            </p>
+            <div className="form-grid mt-5">
+              <div className="span-2">
+                <label htmlFor="withdrawPassword">현재 비밀번호</label>
+                <input
+                  id="withdrawPassword"
+                  type="password"
+                  autoComplete="current-password"
+                  value={withdrawPassword}
+                  disabled={withdrawPending}
+                  onChange={(e) => setWithdrawPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            <label className="agree-row mt-5">
+              <input
+                type="checkbox"
+                checked={withdrawAgreed}
+                disabled={withdrawPending}
+                onChange={(e) => setWithdrawAgreed(e.target.checked)}
+              />
+              <span>위 내용을 확인했으며 회원탈퇴에 동의합니다.</span>
+            </label>
+            {withdrawError ? <p className="mt-4 text-sm text-[#dc3545]">{withdrawError}</p> : null}
+            <button type="submit" className="btn-withdraw w-full mt-7 h-[56px] text-[18px]" disabled={withdrawPending}>
+              {withdrawPending ? "탈퇴 중..." : "회원탈퇴"}
+            </button>
+          </>
+        )}
       </form>
     </div>
   );
