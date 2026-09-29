@@ -11,6 +11,7 @@ import {
   MAX_RESOURCE_FILES,
   isAllowedResourceImageSrc,
   isResourceImageFile,
+  mergePickedFiles,
   resourceFileSrc,
   type ResourceCategory,
 } from "@/lib/resources";
@@ -140,19 +141,22 @@ export default function ResourceForm() {
     }
   }
 
-  function onPickFiles(list: FileList | null) {
-    if (!list?.length) return;
-    setFiles((current) => {
-      const next = [...current];
-      for (const file of list) {
-        if (next.length >= MAX_RESOURCE_FILES) break;
-        if (next.some((row) => row.name === file.name && row.size === file.size && row.lastModified === file.lastModified)) {
-          continue;
-        }
-        next.push(file);
-      }
-      return next;
-    });
+  async function onDeleteCategory(id: string) {
+    if (!confirm("이 분류를 삭제할까요? 이미 등록된 자료의 분류 이름은 그대로 남습니다.")) return;
+    setError("");
+    const res = await fetch(`/api/resources/categories/${id}`, { method: "DELETE" });
+    const json = (await res.json()) as { error?: string; items?: ResourceCategory[] };
+    if (!res.ok) {
+      setError(json.error || "분류를 삭제하지 못했습니다.");
+      return;
+    }
+    setCategories(json.items || []);
+    if (category && !json.items?.some((item) => item.name === category)) setCategory("");
+  }
+
+  function onPickFiles(incoming: File[]) {
+    if (!incoming.length) return;
+    setFiles((current) => mergePickedFiles(current, incoming));
   }
 
   async function uploadContentImage(file: File) {
@@ -309,18 +313,35 @@ export default function ResourceForm() {
                 </option>
               ))}
             </select>
-            <div className="resource-category-add">
-              <input
-                type="text"
-                value={newCategory}
-                maxLength={20}
-                onChange={(e) => setNewCategory(e.target.value)}
-                placeholder="새 분류 이름"
-                aria-label="새 분류 이름"
-              />
-              <button type="button" className="file-pick-btn" disabled={categoryPending} onClick={() => void onAddCategory()}>
-                {categoryPending ? "추가 중..." : "분류 추가"}
-              </button>
+            <div className="resource-category-admin">
+              <p>분류 관리</p>
+              <div className="resource-category-add">
+                <input
+                  type="text"
+                  value={newCategory}
+                  maxLength={20}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="새 분류 이름"
+                  aria-label="새 분류 이름"
+                />
+                <button type="button" className="file-pick-btn" disabled={categoryPending} onClick={() => void onAddCategory()}>
+                  {categoryPending ? "추가 중..." : "분류 추가"}
+                </button>
+              </div>
+              {categories.length ? (
+                <ul>
+                  {categories.map((item) => (
+                    <li key={item.id}>
+                      <span>{item.name}</span>
+                      <button type="button" onClick={() => void onDeleteCategory(item.id)}>
+                        삭제
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="resource-category-empty">등록된 분류가 없습니다. 추가하면 위에서 선택할 수 있습니다.</span>
+              )}
             </div>
           </div>
         </div>
@@ -390,8 +411,9 @@ export default function ResourceForm() {
               type="file"
               multiple
               onChange={(e) => {
-                onPickFiles(e.target.files);
+                const picked = e.target.files ? [...e.target.files] : [];
                 e.currentTarget.value = "";
+                onPickFiles(picked);
               }}
             />
             <span className="file-pick-name">
@@ -413,8 +435,9 @@ export default function ResourceForm() {
             </ul>
           ) : null}
           <p className="mt-1 text-xs text-[var(--sub)]">
-            파일은 선택 사항입니다. 최대 {MAX_RESOURCE_FILES}개, 파일당 50MB까지 업로드할 수 있으며, MP4, WebM 등 영상은
-            자료 페이지에서 바로 재생됩니다.
+            파일은 선택 사항입니다. 한 번에 여러 개를 고르거나, 파일 선택을 다시 눌러 기존 파일에 이어서 추가할 수
+            있습니다. 최대 {MAX_RESOURCE_FILES}개, 파일당 50MB까지 업로드할 수 있으며, MP4, WebM 등 영상은 자료
+            페이지에서 바로 재생됩니다.
           </p>
         </div>
       </div>
