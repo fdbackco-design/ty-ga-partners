@@ -11,6 +11,7 @@ export default function InquiryDetail({ id }: { id: string }) {
   const router = useRouter();
   const [item, setItem] = useState<Inquiry | null>(null);
   const [canManage, setCanManage] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
   const [status, setStatus] = useState<"loading" | "forbidden" | "missing" | "ok">("loading");
   const [error, setError] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -21,12 +22,22 @@ export default function InquiryDetail({ id }: { id: string }) {
   const [pending, setPending] = useState(false);
   const [replyPending, setReplyPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!confirmDelete) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !deleting) setConfirmDelete(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirmDelete, deleting]);
 
   useEffect(() => {
     if (!mounted || !ready) return;
@@ -37,16 +48,19 @@ export default function InquiryDetail({ id }: { id: string }) {
       if (res.status === 403) {
         setStatus("forbidden");
         setCanManage(false);
+        setCanDelete(false);
         return;
       }
       if (!res.ok) {
         setStatus("missing");
         setCanManage(false);
+        setCanDelete(false);
         return;
       }
-      const data = (await res.json()) as { item?: Inquiry; canManage?: boolean };
+      const data = (await res.json()) as { item?: Inquiry; canManage?: boolean; canDelete?: boolean };
       setItem(data.item || null);
       setCanManage(Boolean(data.canManage));
+      setCanDelete(Boolean(data.canDelete ?? data.canManage));
       setStatus(data.item ? "ok" : "missing");
     })();
     return () => {
@@ -143,19 +157,29 @@ export default function InquiryDetail({ id }: { id: string }) {
     setDeletingReplyId(null);
   }
 
-  async function onDelete() {
-    if (!confirm("이 문의를 삭제할까요? 답변도 함께 삭제됩니다.")) return;
+  function openDeleteModal() {
+    setDeleteError("");
+    setConfirmDelete(true);
+  }
+
+  async function confirmDeleteInquiry() {
     setDeleting(true);
     setDeleteError("");
-    const res = await fetch(`/api/inquiries/${id}`, { method: "DELETE" });
-    const json = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      setDeleteError(json.error || "삭제에 실패했습니다.");
+    try {
+      const res = await fetch(`/api/inquiries/${id}`, { method: "DELETE", credentials: "same-origin" });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setDeleteError(json.error || "삭제에 실패했습니다.");
+        setDeleting(false);
+        return;
+      }
+      setConfirmDelete(false);
+      router.push("/inquiries");
+      router.refresh();
+    } catch {
+      setDeleteError("삭제에 실패했습니다.");
       setDeleting(false);
-      return;
     }
-    router.push("/inquiries");
-    router.refresh();
   }
 
   if (!mounted || !ready || status === "loading") {
@@ -166,12 +190,6 @@ export default function InquiryDetail({ id }: { id: string }) {
       <div>
         <h1 className="legal-title">비밀글입니다</h1>
         <p className="mt-4 text-[var(--sub)]">작성자와 관리자만 내용을 확인할 수 있습니다.</p>
-        <p className="mt-6">
-          <Link href="/login?next=/inquiries" className="auth-inline-link">
-            로그인
-          </Link>
-          한 뒤 다시 확인해 주세요.
-        </p>
       </div>
     );
   }
@@ -189,7 +207,8 @@ export default function InquiryDetail({ id }: { id: string }) {
   const images = item.attachments.filter((file) => file.kind === "image");
   const files = item.attachments.filter((file) => file.kind === "file");
   const phone = formatInquiryPhone(item.authorPhone);
-  const showManage = Boolean(user && canManage && user.username === item.authorUsername);
+  const showEdit = Boolean(user && canManage);
+  const showDelete = Boolean(user && canDelete);
   const answered = item.replies.length > 0;
 
   return (
@@ -210,17 +229,21 @@ export default function InquiryDetail({ id }: { id: string }) {
               <time dateTime={item.createdAt}>{item.createdAt.slice(0, 10)}</time>
             </p>
           </div>
-          {showManage ? (
+          {showEdit || showDelete ? (
             <div className="resource-detail-actions">
               <div className="inquiry-detail-actions">
-                <Link href={`/inquiries/${id}/edit`} className="inquiry-edit-btn">
-                  수정
-                </Link>
-                <button type="button" className="resource-delete-btn" onClick={() => void onDelete()} disabled={deleting}>
-                  {deleting ? "삭제 중..." : "삭제"}
-                </button>
+                {showEdit ? (
+                  <Link href={`/inquiries/${id}/edit`} className="inquiry-edit-btn">
+                    수정
+                  </Link>
+                ) : null}
+                {showDelete ? (
+                  <button type="button" className="resource-delete-btn" onClick={openDeleteModal} disabled={deleting}>
+                    {deleting ? "삭제 중..." : "삭제"}
+                  </button>
+                ) : null}
               </div>
-              {deleteError ? <p className="resource-detail-error">{deleteError}</p> : null}
+              {deleteError && !confirmDelete ? <p className="resource-detail-error">{deleteError}</p> : null}
             </div>
           ) : null}
         </div>
@@ -353,6 +376,32 @@ export default function InquiryDetail({ id }: { id: string }) {
             {pending ? "등록 중..." : "답변 등록"}
           </button>
         </form>
+      ) : null}
+
+      {confirmDelete ? (
+        <div
+          className="issue-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="inquiry-delete-title"
+          onClick={() => {
+            if (!deleting) setConfirmDelete(false);
+          }}
+        >
+          <div className="issue-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2 id="inquiry-delete-title">문의 삭제</h2>
+            <p className="inquiry-delete-copy">이 문의를 삭제할까요? 답변도 함께 삭제됩니다.</p>
+            {deleteError ? <p className="resource-detail-error">{deleteError}</p> : null}
+            <div className="issue-modal-actions">
+              <button type="button" className="contract-ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>
+                취소
+              </button>
+              <button type="button" className="btn-apply inquiry-delete-confirm" disabled={deleting} onClick={() => void confirmDeleteInquiry()}>
+                {deleting ? "삭제 중..." : "삭제"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

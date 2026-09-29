@@ -95,6 +95,12 @@ export function canManageInquiry(item: Inquiry, viewer: Viewer | null) {
   return viewer.username === item.authorUsername;
 }
 
+export function canDeleteInquiry(item: Inquiry, viewer: Viewer | null) {
+  if (!viewer) return false;
+  if (viewer.isAdmin) return true;
+  return viewer.username === item.authorUsername;
+}
+
 export function parseInquiryReplyContent(raw: unknown) {
   const content = String(raw || "").trim();
   if (!content) return { error: "답변 내용을 입력해 주세요." };
