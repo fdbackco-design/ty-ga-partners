@@ -79,7 +79,6 @@ export async function PATCH(request: Request, context: RouteContext) {
   const contentType = request.headers.get("content-type") || "";
   let title = item.title;
   let content = item.content;
-  let secret = item.secret;
   let attachments = item.attachments;
 
   try {
@@ -87,12 +86,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       const body = (await request.json()) as {
         title?: string;
         content?: string;
-        secret?: boolean;
         attachments?: InquiryAttachment[];
       };
       if (body.title !== undefined) title = String(body.title || "").trim();
       if (body.content !== undefined) content = String(body.content || "").trim();
-      if (body.secret !== undefined) secret = Boolean(body.secret);
       if (Array.isArray(body.attachments)) {
         attachments = body.attachments.slice(0, MAX_INQUIRY_ATTACHMENTS);
         for (const file of attachments) {
@@ -108,7 +105,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       const form = await request.formData();
       title = String(form.get("title") || "").trim();
       content = String(form.get("content") || "").trim();
-      secret = String(form.get("secret") || "") === "on" || String(form.get("secret") || "") === "true";
       const keepRaw = String(form.get("keepAttachments") || "[]");
       let keepUrls: string[] = [];
       try {
@@ -142,8 +138,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "내용은 5,000자 이내로 입력해 주세요." }, { status: 400 });
   }
 
-  const next = { ...item, title, content, secret, attachments };
-  await saveInquiry(next);
+  const next = { ...item, title, content, secret: true, attachments };
+  try {
+    await saveInquiry(next);
+  } catch (error) {
+    console.error("[inquiries] 수정 저장 실패", error);
+    return NextResponse.json({ error: "문의 저장에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+  }
   return NextResponse.json(publicPayload(next, viewer));
 }
 
@@ -158,6 +159,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!canManageInquiry(item, viewer)) {
     return NextResponse.json({ error: "작성자만 문의를 삭제할 수 있습니다." }, { status: 403 });
   }
-  await removeInquiry(id);
+  try {
+    await removeInquiry(id);
+  } catch (error) {
+    console.error("[inquiries] 삭제 저장 실패", error);
+    return NextResponse.json({ error: "문의 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

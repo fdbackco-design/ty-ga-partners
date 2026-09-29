@@ -14,7 +14,7 @@ export default function InquiriesPage() {
         </p>
         <h1 className="legal-title">문의 게시판</h1>
         <p className="mt-3 text-[var(--sub)]">
-          로그인 후 문의를 남길 수 있습니다. 비밀글은 작성자와 관리자만 확인할 수 있습니다.
+          로그인 후 문의를 남길 수 있습니다. 문의는 작성자와 관리자만 확인할 수 있습니다.
         </p>
         <div className="legal-body is-wide">
           <InquiryBoard />

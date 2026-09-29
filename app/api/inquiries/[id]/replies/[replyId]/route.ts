@@ -43,7 +43,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     replyIndex === index ? { ...reply, content: parsed.content, updatedAt: now } : reply,
   );
   const item = { ...loaded.item, replies };
-  await saveInquiry(item);
+  try {
+    await saveInquiry(item);
+  } catch (error) {
+    console.error("[inquiries] 답변 수정 저장 실패", error);
+    return NextResponse.json({ error: "답변 저장에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+  }
   const viewer = await getViewer();
   return NextResponse.json({ item: toPublicInquiry(item, viewer) });
 }
@@ -62,7 +67,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
     ...loaded.item,
     replies: loaded.item.replies.filter((reply) => reply.id !== replyId),
   };
-  await saveInquiry(item);
+  try {
+    await saveInquiry(item);
+  } catch (error) {
+    console.error("[inquiries] 답변 삭제 저장 실패", error);
+    return NextResponse.json({ error: "답변 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+  }
   const viewer = await getViewer();
   return NextResponse.json({ item: toPublicInquiry(item, viewer) });
 }

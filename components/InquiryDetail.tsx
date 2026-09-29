@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { formatFileSize, formatInquiryPhone, type Inquiry } from "@/lib/inquiries";
+import { formatFileSize, formatInquiryPhone, inquiryAttachmentSrc, type Inquiry } from "@/lib/inquiries";
 
 export default function InquiryDetail({ id }: { id: string }) {
   const { ready, isAdmin, user } = useAuth();
@@ -252,23 +252,29 @@ export default function InquiryDetail({ id }: { id: string }) {
         <p className="resource-content">{item.content}</p>
         {images.length ? (
           <div className="inquiry-images">
-            {images.map((file) => (
-              <a key={file.url} className="inquiry-thumb" href={file.url} target="_blank" rel="noreferrer">
-                <img src={file.url} alt={file.name} />
-                <span>{file.name}</span>
-              </a>
-            ))}
+            {images.map((file, index) => {
+              const src = inquiryAttachmentSrc(id, file, item.attachments.indexOf(file));
+              return (
+                <a key={`${file.url}-${index}`} className="inquiry-thumb" href={src} target="_blank" rel="noreferrer">
+                  <img src={src} alt={file.name} />
+                  <span>{file.name}</span>
+                </a>
+              );
+            })}
           </div>
         ) : null}
         {files.length ? (
           <ul className="inquiry-files">
-            {files.map((file) => (
-              <li key={file.url}>
-                <a href={file.url} download={file.name}>
-                  {file.name} 내려받기 ({formatFileSize(file.size)})
-                </a>
-              </li>
-            ))}
+            {files.map((file, index) => {
+              const src = inquiryAttachmentSrc(id, file, item.attachments.indexOf(file));
+              return (
+                <li key={`${file.url}-${index}`}>
+                  <a href={src} download={file.name}>
+                    {file.name} 내려받기 ({formatFileSize(file.size)})
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         ) : null}
       </section>

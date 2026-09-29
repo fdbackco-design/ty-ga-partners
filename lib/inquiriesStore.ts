@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
-import { list, put } from "@vercel/blob";
 import { type Inquiry, normalizeStoredInquiry } from "@/lib/inquiries";
+import { getBlobJson, putBlobFile } from "@/lib/blobStore";
 
 const INDEX_PATH = path.join(process.cwd(), "data", "inquiries.json");
 const BLOB_INDEX = "inquiries/index.json";
@@ -26,22 +26,12 @@ async function writeLocal(items: Inquiry[]) {
 }
 
 async function readBlob(): Promise<Inquiry[]> {
-  try {
-    const { blobs } = await list({ prefix: BLOB_INDEX });
-    const file = blobs.find((item) => item.pathname === BLOB_INDEX);
-    if (!file) return [];
-    const res = await fetch(file.url, { cache: "no-store" });
-    if (!res.ok) return [];
-    const parsed = (await res.json()) as Inquiry[];
-    return Array.isArray(parsed) ? parsed.map(normalizeStoredInquiry) : [];
-  } catch {
-    return [];
-  }
+  const parsed = await getBlobJson<Inquiry[]>(BLOB_INDEX);
+  return Array.isArray(parsed) ? parsed.map(normalizeStoredInquiry) : [];
 }
 
 async function writeBlob(items: Inquiry[]) {
-  await put(BLOB_INDEX, JSON.stringify(items), {
-    access: "public",
+  await putBlobFile(BLOB_INDEX, JSON.stringify(items), {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",

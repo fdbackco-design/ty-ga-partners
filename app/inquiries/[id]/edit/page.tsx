@@ -27,7 +27,7 @@ export default async function EditInquiryPage({ params }: { params: Promise<{ id
           <Link href={`/inquiries/${id}`}>{item.title}</Link> / 수정
         </p>
         <h1 className="legal-title">문의 수정</h1>
-        <p className="mt-3 text-[var(--sub)]">제목, 내용, 첨부 파일, 비밀글 여부를 바꿀 수 있습니다.</p>
+        <p className="mt-3 text-[var(--sub)]">제목, 내용, 첨부 파일을 바꿀 수 있습니다. 문의는 작성자와 관리자만 확인할 수 있습니다.</p>
         <div className="mt-10">
           <InquiryForm item={toPublicInquiry(item, viewer)} />
         </div>
