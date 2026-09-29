@@ -45,7 +45,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const bytes = Buffer.from(await new Response(result.stream).arrayBuffer());
   const disposition = file.kind === "image" ? "inline" : "attachment";
-  return new NextResponse(bytes, {
+  return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": contentTypeFor(file, result.blob.contentType),
       "Content-Disposition": `${disposition}; filename*=UTF-8''${encodeURIComponent(file.name)}`,

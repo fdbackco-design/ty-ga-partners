@@ -54,39 +54,45 @@ const application = {
   updatedAt: "2026-09-18T00:00:00.000Z",
 } satisfies PartnerApplication;
 
+const empSsn2 = "2234561";
+
+function validate(overrides: Partial<Parameters<typeof validateIssueFields>[0]> = {}) {
+  return validateIssueFields({
+    application,
+    empId: "myungjin",
+    empSsn1: "990311",
+    empSsn2,
+    issuedEmpIdTaken: false,
+    ...overrides,
+  });
+}
+
 describe("validateIssueFields", () => {
-  it("TY 페이로드를 하이픈 없이 구성한다", () => {
-    const result = validateIssueFields({
-      application,
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: false,
-    });
+  it("TY 페이로드에 입력받은 뒷자리 7자리를 하이픈 없이 넣는다", () => {
+    const result = validate();
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.payload.empSsn2).toBe("2000000");
+    expect(empSsn2).toHaveLength(7);
+    expect(result.payload.empSsn2).toBe("2234561");
     expect(result.payload.empSsn2).not.toContain("-");
     expect(result.payload.empMobile).toBe("01051095537");
     expect(result.payload.orgCode).toBe("611361");
     expect(result.payload.docURL).toMatch(/^https?:\/\/.+\/api\/partners\/doc\/[a-f0-9]{32}$/);
   });
 
+  it("뒷자리가 없으면 실패한다", () => {
+    const result = validate({ empSsn2: "" });
+    expect(result.ok).toBe(false);
+  });
+
   it("이미 발급된 empId는 호출 전에 막는다", () => {
-    const result = validateIssueFields({
-      application,
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: true,
-    });
+    const result = validate({ issuedEmpIdTaken: true });
     expect(result.ok).toBe(false);
   });
 
   it("joinChannel이 21자면 잘라내지 않고 실패한다", () => {
-    const result = validateIssueFields({
+    const result = validate({
       application: { ...application, channelSlug: "a".repeat(21) },
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: false,
     });
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -94,11 +100,8 @@ describe("validateIssueFields", () => {
   });
 
   it("저장된 채널 조직코드를 orgCode로 보낸다", () => {
-    const result = validateIssueFields({
+    const result = validate({
       application: { ...application, orgCode: "123456" },
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: false,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -106,21 +109,15 @@ describe("validateIssueFields", () => {
   });
 
   it("조직코드가 없으면 실패한다", () => {
-    const result = validateIssueFields({
+    const result = validate({
       application: { ...application, orgCode: "GA" },
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: false,
     });
     expect(result.ok).toBe(false);
   });
 
   it("저장된 channel 값을 joinChannel로 보낸다", () => {
-    const result = validateIssueFields({
+    const result = validate({
       application: { ...application, channelSlug: "channel2", joinChannel: "GA파트너스" },
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: false,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -128,30 +125,26 @@ describe("validateIssueFields", () => {
   });
 
   it("기본 채널 default slug는 channel1로 보낸다", () => {
-    const result = validateIssueFields({
-      application,
-      empId: "myungjin",
-      empSsn1: "990311",
-      issuedEmpIdTaken: false,
-    });
+    const result = validate();
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.payload.joinChannel).toBe("channel1");
   });
 
-  it("감사로그용 페이로드는 주민번호 앞자리와 휴대폰을 마스킹한다", () => {
+  it("감사로그용 페이로드는 주민번호 앞·뒤와 휴대폰을 마스킹한다", () => {
     const payload: EmployeePayload = {
       orgCode: "611361",
       empName: "이명진",
       empId: "myungjin",
       empSsn1: "990311",
-      empSsn2: "2000000",
+      empSsn2,
       empMobile: "01051095537",
       joinChannel: "GA파트너스",
       docURL: "https://example.com/api/partners/doc/aa",
     };
     expect(auditableEmployeePayload(payload).empSsn1).toBe("●●●●●●");
-    expect(auditableEmployeePayload(payload).empSsn2).toBe("2000000");
+    expect(auditableEmployeePayload(payload).empSsn2).toBe("2●●●●●●");
+    expect(auditableEmployeePayload(payload).empSsn2).not.toBe(empSsn2);
     expect(auditableEmployeePayload(payload).empMobile).toBe("010-****-5537");
     expect(auditableEmployeePayload(payload).empName).toBe("이명진");
     expect(auditableEmployeePayload(payload).empId).toBe("myungjin");

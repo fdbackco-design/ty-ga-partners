@@ -2,6 +2,7 @@ import "server-only";
 
 import { classifyTyOutcome, dryRunEmployeeResponse, tyApiDryRunEnabled, type TyCallResult } from "@/lib/issue/tyResponse";
 import { auditableEmployeePayload, type EmployeePayload } from "@/lib/issue/payload";
+import { isSecureTyApiBaseUrl, tyApiAllowsInsecureHttp } from "@/lib/issue/tyTransport";
 import { logError } from "@/lib/log";
 
 const TIMEOUT_MS = 10_000;
@@ -30,7 +31,14 @@ export async function registerEmployee(payload: EmployeePayload, orgName: string
   if (!baseUrl) {
     return { ok: false, kind: "network", message: "TY_API_BASE_URL이 설정되지 않았습니다.", elapsedMs: 0 };
   }
-  // TODO(확인필요): TY가 docURL을 등록 시점에 즉시 다운로드하는지, 나중에 조회하는지 미확인.
+  if (!isSecureTyApiBaseUrl(baseUrl, tyApiAllowsInsecureHttp())) {
+    return {
+      ok: false,
+      kind: "network",
+      message: "주민번호를 포함한 사원등록은 HTTPS로만 전송할 수 있습니다. TY_API_BASE_URL을 https로 바꿔 주세요.",
+      elapsedMs: 0,
+    };
+  }
 
   const started = Date.now();
   const controller = new AbortController();

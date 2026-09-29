@@ -20,7 +20,7 @@ export default async function NewResourcePage() {
           <Link href="/">홈</Link> / <Link href="/resources">자료실</Link> / 작성
         </p>
         <h1 className="legal-title">자료 등록</h1>
-        <p className="mt-3 text-[var(--sub)]">내용에 이미지를 넣고, 자료 파일을 함께 등록할 수 있습니다.</p>
+        <p className="mt-3 text-[var(--sub)]">분류를 선택하고, 내용에 이미지를 넣으며, 자료 파일을 여러 개 등록할 수 있습니다.</p>
         <div className="mt-10">
           <ResourceForm />
         </div>

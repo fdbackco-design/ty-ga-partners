@@ -121,36 +121,33 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (username: string, password: string): Promise<AuthResult> => {
-    try {
-      const adminRes = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      if (adminRes.ok) {
-        const data = (await adminRes.json()) as { username?: string };
-        const adminName = data.username || username.trim();
-        setIsAdmin(true);
-        setUser({
-          username: adminName,
-          name: "관리자",
-          phone: "",
-          rrnFront: "",
-          rrnBackFirst: "",
-        });
-        return { ok: true, admin: true };
-      }
-    } catch {
-      // continue with member login
-    }
-
-    const res = await fetch("/api/member/login", {
+    const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    const data = (await res.json()) as { error?: string; user?: UserProfile };
-    if (!res.ok || !data.user) {
+    const data = (await res.json()) as {
+      error?: string;
+      admin?: boolean;
+      username?: string;
+      user?: UserProfile;
+    };
+    if (!res.ok) {
+      return { ok: false, error: data.error || "아이디 또는 비밀번호가 올바르지 않습니다." };
+    }
+    if (data.admin) {
+      const adminName = data.username || username.trim();
+      setIsAdmin(true);
+      setUser({
+        username: adminName,
+        name: "관리자",
+        phone: "",
+        rrnFront: "",
+        rrnBackFirst: "",
+      });
+      return { ok: true, admin: true };
+    }
+    if (!data.user) {
       return { ok: false, error: data.error || "아이디 또는 비밀번호가 올바르지 않습니다." };
     }
     setIsAdmin(false);

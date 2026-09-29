@@ -23,7 +23,7 @@ export const PRODUCTS = [
     income: "400,000원",
   },
   {
-    name: "스페셜라이프케어",
+    name: "스페셜라이프 라이트",
     price: "38,000원",
     icon: "/images/product-special.png",
     income: "400,000원",

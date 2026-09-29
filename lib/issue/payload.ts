@@ -1,4 +1,5 @@
 import { isValidOrgCode, JOIN_CHANNEL_MAX, normalizeChannelSlug } from "@/config/channels";
+import { isValidSsnChecksum } from "@/lib/contract/validate";
 import { getAppUrl } from "@/lib/siteUrl";
 import type { PartnerApplication } from "@/lib/partnerApplication";
 import { maskPhone } from "@/lib/partnerCert";
@@ -25,10 +26,17 @@ export function maskEmpSsn1(value: string) {
   return value ? "●●●●●●" : "";
 }
 
+export function maskEmpSsn2(value: string) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  return `${digits.slice(0, 1)}●●●●●●`;
+}
+
 export function auditableEmployeePayload(payload: EmployeePayload) {
   return {
     ...payload,
     empSsn1: maskEmpSsn1(payload.empSsn1),
+    empSsn2: maskEmpSsn2(payload.empSsn2),
     empMobile: maskPhone(payload.empMobile),
   };
 }
@@ -41,6 +49,7 @@ export function validateIssueFields(input: {
   application: PartnerApplication;
   empId: string;
   empSsn1: string;
+  empSsn2: string;
   issuedEmpIdTaken: boolean;
 }): IssueValidation {
   const { application, empId, empSsn1, issuedEmpIdTaken } = input;
@@ -63,9 +72,12 @@ export function validateIssueFields(input: {
 
   const genderCode = application.ssnGenderCode || "";
   if (!/^[1-8]$/.test(genderCode)) return { ok: false, error: "주민등록번호 성별코드가 없습니다." };
-  const empSsn2 = toApiSsn2(genderCode);
-  if (!/^\d{7}$/.test(empSsn2) || empSsn2[0] !== genderCode || empSsn2.slice(1) !== "000000") {
+  const empSsn2 = toApiSsn2(input.empSsn2);
+  if (!empSsn2 || empSsn2[0] !== genderCode) {
     return { ok: false, error: "주민등록번호 뒤자리 형식이 올바르지 않습니다." };
+  }
+  if (!isValidSsnChecksum(empSsn1, empSsn2)) {
+    return { ok: false, error: "주민등록번호를 다시 확인해 주세요." };
   }
 
   const empMobile = (application.certMobile || "").replace(/\D/g, "");

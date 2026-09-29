@@ -43,25 +43,34 @@ export default function InquiryDetail({ id }: { id: string }) {
     if (!mounted || !ready) return;
     let cancelled = false;
     void (async () => {
-      const res = await fetch(`/api/inquiries/${id}`, { cache: "no-store" });
-      if (cancelled) return;
-      if (res.status === 403) {
-        setStatus("forbidden");
-        setCanManage(false);
-        setCanDelete(false);
+      let attempt = 0;
+      while (!cancelled) {
+        const res = await fetch(`/api/inquiries/${id}`, { cache: "no-store" });
+        if (cancelled) return;
+        if (res.status === 403) {
+          setStatus("forbidden");
+          setCanManage(false);
+          setCanDelete(false);
+          return;
+        }
+        if (res.status === 404 && attempt < 4) {
+          attempt += 1;
+          await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
+          continue;
+        }
+        if (!res.ok) {
+          setStatus("missing");
+          setCanManage(false);
+          setCanDelete(false);
+          return;
+        }
+        const data = (await res.json()) as { item?: Inquiry; canManage?: boolean; canDelete?: boolean };
+        setItem(data.item || null);
+        setCanManage(Boolean(data.canManage));
+        setCanDelete(Boolean(data.canDelete ?? data.canManage));
+        setStatus(data.item ? "ok" : "missing");
         return;
       }
-      if (!res.ok) {
-        setStatus("missing");
-        setCanManage(false);
-        setCanDelete(false);
-        return;
-      }
-      const data = (await res.json()) as { item?: Inquiry; canManage?: boolean; canDelete?: boolean };
-      setItem(data.item || null);
-      setCanManage(Boolean(data.canManage));
-      setCanDelete(Boolean(data.canDelete ?? data.canManage));
-      setStatus(data.item ? "ok" : "missing");
     })();
     return () => {
       cancelled = true;
