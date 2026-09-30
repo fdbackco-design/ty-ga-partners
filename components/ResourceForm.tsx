@@ -77,7 +77,7 @@ export default function ResourceForm() {
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const savedRange = useRef<Range | null>(null);
-  const [storage, setStorage] = useState<"blob" | "local">("local");
+  const [storage, setStorage] = useState<"blob" | "local" | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [categories, setCategories] = useState<ResourceCategory[]>([]);
   const [category, setCategory] = useState("");
@@ -98,7 +98,7 @@ export default function ResourceForm() {
     void fetch("/api/admin/me", { cache: "no-store" })
       .then((res) => res.json())
       .then((data: { storage?: "blob" | "local" }) => {
-        if (data.storage === "blob") setStorage("blob");
+        setStorage(data.storage === "blob" ? "blob" : "local");
       });
     void fetch("/api/resources/categories", { cache: "no-store" })
       .then((res) => res.json())
@@ -143,6 +143,15 @@ export default function ResourceForm() {
     if (category && !json.items?.some((item) => item.name === category)) setCategory("");
   }
 
+  async function ensureStorage() {
+    if (storage) return storage;
+    const res = await fetch("/api/admin/me", { cache: "no-store" });
+    const data = (await res.json()) as { storage?: "blob" | "local" };
+    const nextStorage = data.storage === "blob" ? "blob" : "local";
+    setStorage(nextStorage);
+    return nextStorage;
+  }
+
   function onPickFiles(incoming: File[]) {
     if (!incoming.length) return;
     setFiles((current) => mergePickedFiles(current, incoming));
@@ -155,7 +164,8 @@ export default function ResourceForm() {
     if (file.size > MAX_CONTENT_IMAGE_BYTES) {
       throw new Error("본문 이미지는 10MB까지 업로드할 수 있습니다.");
     }
-    if (storage === "blob") {
+    const mode = await ensureStorage();
+    if (mode === "blob") {
       const blob = await uploadResourceBlob(file);
       return resourceFileSrc(blob.url, blob.pathname);
     }
@@ -242,7 +252,8 @@ export default function ResourceForm() {
     setPending(true);
     setError("");
     try {
-      if (storage === "blob") {
+      const mode = await ensureStorage();
+      if (mode === "blob") {
         const uploaded = await Promise.all(
           files.map(async (file) => {
             const blob = await uploadResourceBlob(file);
