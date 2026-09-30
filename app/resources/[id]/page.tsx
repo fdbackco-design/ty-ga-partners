@@ -1,8 +1,9 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ResourceContent from "@/components/ResourceContent";
 import ResourceDeleteButton from "@/components/ResourceDeleteButton";
-import { getResourceAccess } from "@/lib/resourceAccess";
+import { getResourceAccess as loadResourceAccess } from "@/lib/resourceAccess";
 import {
   formatFileSize,
   isPlayableVideo,
@@ -10,7 +11,10 @@ import {
   resourceHasVideo,
   videoMimeType,
 } from "@/lib/resources";
-import { getResource } from "@/lib/resourcesStore";
+import { getResource as loadResource } from "@/lib/resourcesStore";
+
+const getResource = cache(loadResource);
+const getResourceAccess = cache(loadResourceAccess);
 
 export const dynamic = "force-dynamic";
 

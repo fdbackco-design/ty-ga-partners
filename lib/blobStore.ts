@@ -1,25 +1,6 @@
 import { del, get, put } from "@vercel/blob";
 
-type BlobAccess = "public" | "private";
-
-const ACCESS_ORDER: BlobAccess[] = ["private", "public"];
-let cachedAccess: BlobAccess | null = null;
-
-function accessOrder() {
-  return cachedAccess ? [cachedAccess, ...ACCESS_ORDER.filter((access) => access !== cachedAccess)] : ACCESS_ORDER;
-}
-
-function putOptions(
-  access: BlobAccess,
-  options: {
-    addRandomSuffix?: boolean;
-    allowOverwrite?: boolean;
-    contentType?: string;
-    cacheControlMaxAge?: number;
-  },
-) {
-  return { ...options, access };
-}
+const BLOB_ACCESS = "private" as const;
 
 export async function putBlobFile(
   pathname: string,
@@ -31,30 +12,15 @@ export async function putBlobFile(
     cacheControlMaxAge?: number;
   },
 ) {
-  let lastError: unknown;
-  for (const access of accessOrder()) {
-    try {
-      const result = await put(pathname, body, putOptions(access, options));
-      cachedAccess = access;
-      return result;
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("Blob 저장에 실패했습니다.");
+  return put(pathname, body, { ...options, access: BLOB_ACCESS });
 }
 
 export async function getBlobResult(pathname: string) {
-  for (const access of accessOrder()) {
-    try {
-      const result = await get(pathname, { access, useCache: false });
-      if (result?.statusCode === 200 && result.stream) {
-        cachedAccess = access;
-        return result;
-      }
-    } catch {
-      // store access mode may not match; try the other
-    }
+  try {
+    const result = await get(pathname, { access: BLOB_ACCESS, useCache: false });
+    if (result?.statusCode === 200 && result.stream) return result;
+  } catch {
+    // missing blobs are treated as not found
   }
   return null;
 }
