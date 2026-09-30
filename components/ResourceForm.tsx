@@ -2,8 +2,8 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
 import { useAuth } from "@/components/AuthProvider";
+import { uploadClientBlob } from "@/lib/clientBlobUpload";
 import {
   MAX_CONTENT_IMAGE_BYTES,
   MAX_CONTENT_IMAGES,
@@ -67,19 +67,8 @@ function serializeEditor(root: HTMLElement) {
   return out.trim();
 }
 
-async function uploadResourceBlob(file: File) {
-  const pathname = `resources/uploads/${file.name}`;
-  try {
-    return await upload(pathname, file, {
-      access: "private",
-      handleUploadUrl: "/api/resources/upload",
-    });
-  } catch {
-    return await upload(pathname, file, {
-      access: "public",
-      handleUploadUrl: "/api/resources/upload",
-    });
-  }
+function uploadResourceBlob(file: File) {
+  return uploadClientBlob(`resources/uploads/${file.name}`, file, "/api/resources/upload");
 }
 
 export default function ResourceForm() {
@@ -254,15 +243,16 @@ export default function ResourceForm() {
     setError("");
     try {
       if (storage === "blob") {
-        const uploaded: { name: string; url: string; size: number }[] = [];
-        for (const file of files) {
-          const blob = await uploadResourceBlob(file);
-          uploaded.push({
-            name: file.name,
-            url: resourceFileSrc(blob.url, blob.pathname),
-            size: file.size,
-          });
-        }
+        const uploaded = await Promise.all(
+          files.map(async (file) => {
+            const blob = await uploadResourceBlob(file);
+            return {
+              name: file.name,
+              url: resourceFileSrc(blob.url, blob.pathname),
+              size: file.size,
+            };
+          }),
+        );
         const res = await fetch("/api/resources", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

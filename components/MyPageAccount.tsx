@@ -6,6 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly, formatPhoneDisplay } from "@/lib/auth";
 import { formatKstDateTime } from "@/lib/formatDate";
 import { contractDocHref, type MemberPartnerSummary } from "@/lib/partnerApplication";
+import { releaseStatusLabel, type ReleaseRequest } from "@/lib/releases";
 import type { PhoneHistoryItem } from "@/lib/usersStore";
 import SystemLoginGuide from "@/components/SystemLoginGuide";
 import HqChangeGuide from "@/components/HqChangeGuide";
@@ -32,6 +33,7 @@ export default function MyPageAccount({
   withdrawLocked,
   partner,
   phoneHistory,
+  releases,
 }: {
   username: string;
   name: string;
@@ -40,6 +42,7 @@ export default function MyPageAccount({
   withdrawLocked: boolean;
   partner: MemberPartnerSummary;
   phoneHistory: PhoneHistoryItem[];
+  releases: ReleaseRequest[];
 }) {
   const { logout, refreshMember } = useAuth();
   const tabPrefix = useId();
@@ -190,9 +193,35 @@ export default function MyPageAccount({
             계약서 다운로드
           </a>
         ) : (
-          <p className="mt-5 text-sm text-[var(--sub)]">위촉계약이 체결되면 여기에서 계약서를 받을 수 있습니다.</p>
+          <p className="mt-5 text-sm text-[var(--sub)]"></p>
         )}
         <HqChangeGuide />
+      </section>
+
+      <section className="form-card">
+        <h2 className="mypage-section-title">해촉 신청</h2>
+        {releases.length === 0 ? (
+          <p className="text-sm text-[var(--sub)]">
+            접수된 해촉 신청이 없습니다.{" "}
+            <Link href="/release-request" className="mypage-withdraw-link">
+              해촉 신청
+            </Link>
+            에서 접수할 수 있습니다.
+          </p>
+        ) : (
+          <ul className="mypage-release-list">
+            {releases.map((item) => (
+              <li key={item.id}>
+                <div>
+                  <strong>{releaseStatusLabel(item.status)}</strong>
+                  <span>{formatPhoneDisplay(item.phone)}</span>
+                </div>
+                <p>{item.memo || "요청 내용 없음"}</p>
+                <time dateTime={item.createdAt}>{formatKstDateTime(item.createdAt)}</time>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {partner.issued ? (

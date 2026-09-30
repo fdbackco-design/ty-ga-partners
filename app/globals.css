@@ -2319,6 +2319,49 @@ input {
   white-space: nowrap;
 }
 
+.mypage-release-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.mypage-release-list li {
+  padding: 14px 0;
+  border-bottom: 1px solid #f0e4de;
+}
+
+.mypage-release-list li:first-child {
+  padding-top: 0;
+}
+
+.mypage-release-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.mypage-release-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.mypage-release-list p {
+  margin: 8px 0 0;
+  color: #5b564c;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.mypage-release-list time {
+  display: block;
+  margin-top: 8px;
+  color: var(--sub);
+  font-size: 13px;
+}
+
 .mypage-withdraw-link {
   color: var(--accent);
   font-weight: 800;
@@ -7239,6 +7282,13 @@ input {
   white-space: normal;
   word-break: keep-all;
   color: #5b564c;
+}
+
+.admin-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .not-found-page {

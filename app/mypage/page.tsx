@@ -3,6 +3,7 @@ import { memberWithdrawBlocked } from "@/lib/memberWithdraw";
 import { requireMemberUser } from "@/lib/partnerAccess";
 import { memberPartnerSummary } from "@/lib/partnerApplication";
 import { getApplicationByUserId, phoneChangeLocked } from "@/lib/partnerApplicationsStore";
+import { getReleasesByUserId } from "@/lib/releasesStore";
 import { listPhoneHistory } from "@/lib/usersStore";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default async function MyPage() {
   } catch (error) {
     historyError = error instanceof Error ? error.message : "이전 번호를 불러오지 못했습니다.";
   }
+  const releases = await getReleasesByUserId(user.id);
   return (
     <main className="auth-page">
       <div className="wrap">
@@ -39,6 +41,7 @@ export default async function MyPage() {
             withdrawLocked={memberWithdrawBlocked(application)}
             partner={memberPartnerSummary(application, user.username)}
             phoneHistory={phoneHistory}
+            releases={releases}
           />
         </div>
       </div>

@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { useAuth } from "@/components/AuthProvider";
+import { uploadClientBlob } from "@/lib/clientBlobUpload";
 import {
   MAX_INQUIRY_ATTACHMENTS,
   MAX_INQUIRY_FILE_BYTES,
@@ -23,7 +23,7 @@ export default function InquiryForm({ item }: { item?: Inquiry }) {
   const [kept, setKept] = useState<InquiryAttachment[]>(item?.attachments || []);
 
   useEffect(() => {
-    void fetch("/api/inquiries", { cache: "no-store" })
+    void fetch("/api/inquiries?storageOnly=1", { cache: "no-store" })
       .then((res) => res.json())
       .then((data: { storage?: "blob" | "local" }) => {
         if (data.storage === "blob") setStorage("blob");
@@ -69,29 +69,19 @@ export default function InquiryForm({ item }: { item?: Inquiry }) {
       const endpoint = isEdit ? `/api/inquiries/${item?.id}` : "/api/inquiries";
       const method = isEdit ? "PATCH" : "POST";
       if (storage === "blob") {
-        const attachments: InquiryAttachment[] = [...kept];
-        for (const file of allFiles) {
-          const pathname = `inquiries/uploads/${file.name}`;
-          let blob;
-          try {
-            blob = await upload(pathname, file, {
-              access: "private",
-              handleUploadUrl: "/api/inquiries/upload",
-            });
-          } catch {
-            blob = await upload(pathname, file, {
-              access: "public",
-              handleUploadUrl: "/api/inquiries/upload",
-            });
-          }
-          attachments.push({
-            name: file.name,
-            url: blob.url,
-            pathname: blob.pathname,
-            size: file.size,
-            kind: attachmentKind(file.name, file.type),
-          });
-        }
+        const uploaded = await Promise.all(
+          allFiles.map(async (file) => {
+            const blob = await uploadClientBlob(`inquiries/uploads/${file.name}`, file, "/api/inquiries/upload");
+            return {
+              name: file.name,
+              url: blob.url,
+              pathname: blob.pathname,
+              size: file.size,
+              kind: attachmentKind(file.name, file.type),
+            } satisfies InquiryAttachment;
+          }),
+        );
+        const attachments: InquiryAttachment[] = [...kept, ...uploaded];
         const res = await fetch(endpoint, {
           method,
           headers: { "Content-Type": "application/json" },

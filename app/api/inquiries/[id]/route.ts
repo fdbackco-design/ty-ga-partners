@@ -26,24 +26,26 @@ function filesFromForm(form: FormData, key: string) {
 }
 
 async function attachmentsFromFiles(id: string, files: File[], startIndex: number) {
-  const attachments: InquiryAttachment[] = [];
-  for (const [index, file] of files.entries()) {
+  for (const file of files) {
     if (isBlockedFile(file.name)) {
       throw new Error("허용되지 않는 파일 형식입니다.");
     }
     if (file.size > MAX_INQUIRY_FILE_BYTES) {
       throw new Error("첨부 파일은 각 10MB까지 업로드할 수 있습니다.");
     }
-    const fileName = `${startIndex + index + 1}-${safeFileName(file.name)}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    attachments.push({
-      name: safeFileName(file.name),
-      url: await saveLocalInquiryFile(id, fileName, buffer),
-      size: file.size,
-      kind: attachmentKind(file.name, file.type),
-    });
   }
-  return attachments;
+  return Promise.all(
+    files.map(async (file, index) => {
+      const fileName = `${startIndex + index + 1}-${safeFileName(file.name)}`;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      return {
+        name: safeFileName(file.name),
+        url: await saveLocalInquiryFile(id, fileName, buffer),
+        size: file.size,
+        kind: attachmentKind(file.name, file.type),
+      } satisfies InquiryAttachment;
+    }),
+  );
 }
 
 function publicPayload(item: NonNullable<Awaited<ReturnType<typeof getInquiry>>>, viewer: Awaited<ReturnType<typeof getViewer>>) {

@@ -138,15 +138,16 @@ export async function POST(request: Request) {
   }
 
   const id = crypto.randomUUID();
-  const files: ResourceFile[] = [];
-  for (const [index, file] of uploaded.entries()) {
-    const storedName = `${index + 1}-${safeFileName(file.name)}`;
-    files.push({
-      name: file.name,
-      url: await saveLocalFile(id, storedName, Buffer.from(await file.arrayBuffer())),
-      size: file.size,
-    });
-  }
+  const files: ResourceFile[] = await Promise.all(
+    uploaded.map(async (file, index) => {
+      const storedName = `${index + 1}-${safeFileName(file.name)}`;
+      return {
+        name: file.name,
+        url: await saveLocalFile(id, storedName, Buffer.from(await file.arrayBuffer())),
+        size: file.size,
+      };
+    }),
+  );
   const item = await saveResource(
     normalizeStoredResource({
       id,
