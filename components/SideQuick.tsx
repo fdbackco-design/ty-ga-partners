@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { COMPANY } from "@/lib/data";
 
 export default function SideQuick() {
   return (
     <aside className="side-quick" aria-label="바로가기">
-      <a href="#inputcontact" className="side-quick-consult">
+      <Link href="/consult" className="side-quick-consult">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C11.4 21 3 12.6 3 3c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8z"
@@ -15,7 +16,7 @@ export default function SideQuick() {
           <br />
           <em className="not-italic font-medium text-[11px]">Click!</em>
         </span>
-      </a>
+      </Link>
       <a
         href={COMPANY.blog}
         target="_blank"

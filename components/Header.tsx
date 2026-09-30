@@ -14,8 +14,9 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { user, ready, isAdmin, logout } = useAuth();
+  const { user, partner, ready, isAdmin, logout } = useAuth();
   const menu = !ready ? [] : isAdmin ? ADMIN_NAV : NAV;
+  const issued = Boolean(ready && partner?.issued);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -63,7 +64,7 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link href="/login" className={`header-text-btn ${pathname === "/login" ? "is-on" : ""}`}>
+                <Link href="/login" className={`header-text-btn ${pathname === "/login" || pathname.startsWith("/login/") ? "is-on" : ""}`}>
                   로그인
                 </Link>
                 <Link
@@ -77,7 +78,7 @@ export default function Header() {
           </div>
           {isAdmin ? null : (
             <Link href="/#inputcontact" className="btn-ghost">
-              신청하기 →
+              {issued ? "발급 완료" : "신청하기 →"}
             </Link>
           )}
           <button
@@ -139,7 +140,7 @@ export default function Header() {
             )}
             {isAdmin ? null : (
               <Link href="/#inputcontact" className="btn-apply mt-3 h-12" onClick={() => setOpen(false)}>
-                파트너스 신청하기
+                {issued ? "발급 완료" : "파트너스 신청하기"}
               </Link>
             )}
           </div>

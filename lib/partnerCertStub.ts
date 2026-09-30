@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { createHash } from "crypto";
 import { isValidSsnChecksum } from "@/lib/contract/validate";
 import { digitsOnly } from "@/lib/partnerCert";
 import { birthdateFromRrn } from "@/utils/ssn";
@@ -42,6 +42,10 @@ export function parseStubIdentity(input: { name?: string; phone?: string; ssn?: 
     birthdate,
     certGender: Number(genderCode) % 2 === 1 ? 1 : 0,
     certNational: ["5", "6", "7", "8"].includes(genderCode) ? "1" : "0",
-    certDi: `stub:${randomBytes(12).toString("hex")}`,
+    certDi: stubCertDi(name, phone, ssn),
   };
+}
+
+export function stubCertDi(name: string, phone: string, ssn: string) {
+  return `stub:${createHash("sha256").update(`${name}|${phone}|${ssn}`).digest("hex").slice(0, 32)}`;
 }

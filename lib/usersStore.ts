@@ -1,5 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { UserProfile } from "@/lib/auth";
+import { digitsOnly } from "@/lib/auth";
+import { normalizeName } from "@/lib/partnerCert";
 import { getSupabaseAdmin, type UserRow } from "@/lib/supabase";
 
 export type StoredUser = UserProfile & {
@@ -73,6 +75,27 @@ export async function findUsersByIds(ids: string[]) {
   const { data, error } = await supabase.from("ga_users").select("*").in("id", unique);
   if (error) throw new Error(error.message);
   return (data || []).map(toUser);
+}
+
+export async function findUsersByIdentity(input: {
+  name: string;
+  phone: string;
+  rrnFront: string;
+  rrnBackFirst: string;
+}) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("ga_users")
+    .select("*")
+    .eq("phone", digitsOnly(input.phone))
+    .eq("rrn_front", input.rrnFront)
+    .eq("rrn_back_first", input.rrnBackFirst);
+  if (error) throw new Error(error.message);
+  const want = normalizeName(input.name);
+  return (data || [])
+    .map(toUser)
+    .filter((user) => normalizeName(user.name) === want)
+    .sort((a, b) => a.username.localeCompare(b.username, "en"));
 }
 
 export async function createUser(input: {
@@ -163,6 +186,12 @@ export async function updateUserPassword(userId: string, currentPassword: string
   if (!user || !verifyPassword(currentPassword, user.passwordHash)) {
     throw new Error("현재 비밀번호가 올바르지 않습니다.");
   }
+  await setUserPasswordById(userId, nextPassword);
+}
+
+export async function setUserPasswordById(userId: string, nextPassword: string) {
+  const user = await findUserById(userId);
+  if (!user) throw new Error("회원 정보를 찾을 수 없습니다.");
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.from("ga_users").update({ password_hash: hashPassword(nextPassword) }).eq("id", userId);
   if (error) throw new Error(error.message);

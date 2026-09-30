@@ -1,3 +1,5 @@
+import { TY_ISSUE_CODE } from "@/lib/issue/failReason";
+
 export const DRY_RUN_EMP_CODE = "TEST000000001";
 
 export type TyEmployeeSuccess = {
@@ -85,11 +87,23 @@ export function classifyTyOutcome(result: TyCallResult): TyOutcome {
     };
   }
 
-  if (error.code === -1000) {
+  if (error.code === TY_ISSUE_CODE.invalid) {
     return {
       kind: "invalid",
-      code: -1000,
+      code: TY_ISSUE_CODE.invalid,
       message: typeof error.message === "string" ? error.message : "인자가 잘못되었습니다.",
+      raw: result.body,
+    };
+  }
+
+  if (error.code === TY_ISSUE_CODE.alreadyIssued) {
+    return {
+      kind: "invalid",
+      code: TY_ISSUE_CODE.alreadyIssued,
+      message:
+        typeof error.message === "string" && error.message.trim()
+          ? error.message
+          : "이미 사원코드가 발급된 분입니다.",
       raw: result.body,
     };
   }

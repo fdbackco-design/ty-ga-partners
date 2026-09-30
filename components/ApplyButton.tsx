@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function ApplyButton({
   href = "/#inputcontact",
@@ -11,10 +14,12 @@ export default function ApplyButton({
   badge?: boolean;
   className?: string;
 }) {
+  const { partner, ready } = useAuth();
+  const issued = Boolean(ready && partner?.issued);
   return (
     <Link href={href} className={`btn-apply ${className}`}>
-      {children}
-      {badge ? <span className="badge">마감 임박!</span> : null}
+      {issued ? "발급 완료" : children}
+      {badge && !issued ? <span className="badge">마감 임박!</span> : null}
     </Link>
   );
 }

@@ -1,11 +1,18 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import SignupForm from "@/components/SignupForm";
+import { getMemberFromCookies } from "@/lib/member";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "회원가입 | TY파트너스 공식인증센터",
 };
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const member = await getMemberFromCookies();
+  if (member) redirect("/mypage");
+
   return (
     <main className="auth-page">
       <div className="wrap">

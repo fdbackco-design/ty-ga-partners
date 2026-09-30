@@ -76,7 +76,7 @@ describe("validateIssueFields", () => {
     expect(result.payload.empSsn2).toBe("2234561");
     expect(result.payload.empSsn2).not.toContain("-");
     expect(result.payload.empMobile).toBe("01051095537");
-    expect(result.payload.orgCode).toBe("611361");
+    expect(result.payload.orgCode).toBe("611441");
     expect(result.payload.docURL).toMatch(/^https?:\/\/.+\/api\/partners\/doc\/[a-f0-9]{32}$/);
   });
 
@@ -133,7 +133,7 @@ describe("validateIssueFields", () => {
 
   it("감사로그용 페이로드는 주민번호 앞·뒤와 휴대폰을 마스킹한다", () => {
     const payload: EmployeePayload = {
-      orgCode: "611361",
+      orgCode: "611441",
       empName: "이명진",
       empId: "myungjin",
       empSsn1: "990311",

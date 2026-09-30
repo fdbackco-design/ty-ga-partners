@@ -18,11 +18,21 @@ describe("classifyTyOutcome", () => {
       elapsedMs: 12,
       body: {
         error: { code: 0, message: "" },
-        payload: { orgName: "GA파트너스", empName: "이명진", empCode: "TYS260901001", empId: "myungjin" },
+        payload: { orgName: "GA파트너스 1", empName: "이명진", empCode: "TYS260901001", empId: "myungjin" },
         data: {},
       },
     });
     expect(outcome).toMatchObject({ kind: "issued", empCode: "TYS260901001" });
+  });
+
+  it("code -7000 이면 이미 발급된 실패이다", () => {
+    const outcome = classifyTyOutcome({
+      ok: true,
+      status: 200,
+      elapsedMs: 12,
+      body: { error: { code: -7000, message: "" }, payload: {}, data: {} },
+    });
+    expect(outcome).toMatchObject({ kind: "invalid", code: -7000 });
   });
 
   it("code -1000 이면 재시도 가능한 실패이다", () => {

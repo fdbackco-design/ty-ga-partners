@@ -1,4 +1,5 @@
 import type { StoredAgreement } from "@/lib/contract/agreements";
+import { classifyIssueFail } from "@/lib/issue/failReason";
 
 export const PARTNER_STATUSES = [
   "DRAFT",
@@ -49,6 +50,7 @@ export const AUDIT_EVENTS = [
   "ADMIN_REVOKE",
   "channel_miss",
   "ERROR",
+  "ACCOUNT_RECOVER",
 ] as const;
 export type AuditEvent = (typeof AUDIT_EVENTS)[number];
 
@@ -272,6 +274,10 @@ export type PublicContractDraft = ReturnType<typeof publicContractDraft>;
 
 export function publicIssueView(application: PartnerApplication, empId: string, ssnFront?: string) {
   const issued = application.status === "ISSUED";
+  const failKind =
+    application.status === "FAILED"
+      ? classifyIssueFail({ code: application.lastErrorCode, message: application.lastErrorMessage })
+      : null;
   return {
     status: application.status,
     name: application.certName,
@@ -281,8 +287,37 @@ export function publicIssueView(application: PartnerApplication, empId: string, 
     ssnFront: ssnFront || (application.certBirthdate ? application.certBirthdate.slice(2) : ""),
     issuedAt: application.issuedAt,
     docToken: application.docToken && !application.docRevoked ? application.docToken : null,
-    canRetry: application.status === "FAILED" && Boolean(application.signedAt),
+    failKind,
+    canRetry: application.status === "FAILED" && Boolean(application.signedAt) && failKind !== "already_issued",
   };
 }
 
 export type PublicIssueView = ReturnType<typeof publicIssueView>;
+
+export type MemberPartnerSummary = {
+  issued: boolean;
+  status: PartnerApplicationStatus | null;
+  statusLabel: string;
+  empId: string;
+  empCode: string | null;
+  docToken: string | null;
+};
+
+export function memberPartnerSummary(
+  application: PartnerApplication | null,
+  username: string,
+): MemberPartnerSummary {
+  const token = application?.docToken && !application.docRevoked ? application.docToken : null;
+  return {
+    issued: application?.status === "ISSUED",
+    status: application?.status ?? null,
+    statusLabel: application ? partnerStatusLabel(application.status) : "미신청",
+    empId: username,
+    empCode: application?.status === "ISSUED" ? application.empCode : null,
+    docToken: token,
+  };
+}
+
+export function contractDocHref(token: string, mode: "view" | "download" = "download") {
+  return mode === "view" ? `/api/partners/doc/${token}?view=1` : `/api/partners/doc/${token}`;
+}

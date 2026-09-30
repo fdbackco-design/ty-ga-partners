@@ -95,10 +95,11 @@ export default function SignupForm() {
             inputMode="numeric"
             autoComplete="tel"
             placeholder="01012345678"
+            maxLength={11}
             value={phone}
             onChange={(e) => setPhone(digitsOnly(e.target.value).slice(0, 11))}
           />
-          <p className="mt-1 text-xs text-[var(--sub)]">- 없이 숫자만 입력해주세요</p>
+          <p className="mt-1 text-xs text-[var(--sub)]">010 번호는 11자리, - 없이 숫자만 입력해주세요</p>
         </div>
         <div className="span-2">
           <label htmlFor="rrnFront">

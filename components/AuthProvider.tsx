@@ -10,6 +10,7 @@ import {
   validateUsername,
   type UserProfile,
 } from "@/lib/auth";
+import type { MemberPartnerSummary } from "@/lib/partnerApplication";
 
 type SignupInput = {
   username: string;
@@ -25,6 +26,7 @@ type AuthResult = { ok: true; admin?: boolean } | { ok: false; error: string };
 
 type AuthContextValue = {
   user: UserProfile | null;
+  partner: MemberPartnerSummary | null;
   ready: boolean;
   isAdmin: boolean;
   signup: (input: SignupInput) => Promise<AuthResult>;
@@ -43,6 +45,7 @@ export function useAuth() {
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [partner, setPartner] = useState<MemberPartnerSummary | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -54,6 +57,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         const data = (await res.json()) as { admin?: boolean; username?: string };
         if (!cancelled && data.admin && data.username) {
           setIsAdmin(true);
+          setPartner(null);
           setUser({
             username: data.username,
             name: "관리자",
@@ -69,10 +73,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       }
       try {
         const res = await fetch("/api/member/me", { cache: "no-store" });
-        const data = (await res.json()) as { user?: UserProfile | null };
+        const data = (await res.json()) as { user?: UserProfile | null; partner?: MemberPartnerSummary | null };
         if (!cancelled && data.user) {
           setIsAdmin(false);
           setUser(data.user);
+          setPartner(data.partner ?? null);
           setReady(true);
           return;
         }
@@ -82,6 +87,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       setIsAdmin(false);
       setUser(null);
+      setPartner(null);
       setReady(true);
     })();
     return () => {
@@ -111,12 +117,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
-    const data = (await res.json()) as { error?: string; user?: UserProfile };
+    const data = (await res.json()) as { error?: string; user?: UserProfile; partner?: MemberPartnerSummary };
     if (!res.ok || !data.user) {
       return { ok: false, error: data.error || "회원가입에 실패했습니다." };
     }
     setIsAdmin(false);
     setUser(data.user);
+    setPartner(data.partner ?? null);
     return { ok: true };
   }, []);
 
@@ -131,6 +138,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       admin?: boolean;
       username?: string;
       user?: UserProfile;
+      partner?: MemberPartnerSummary;
     };
     if (!res.ok) {
       return { ok: false, error: data.error || "아이디 또는 비밀번호가 올바르지 않습니다." };
@@ -138,6 +146,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     if (data.admin) {
       const adminName = data.username || username.trim();
       setIsAdmin(true);
+      setPartner(null);
       setUser({
         username: adminName,
         name: "관리자",
@@ -152,11 +161,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
     setIsAdmin(false);
     setUser(data.user);
+    setPartner(data.partner ?? null);
     return { ok: true, admin: false };
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
+    setPartner(null);
     setIsAdmin(false);
     void fetch("/api/admin/logout", { method: "POST" });
     void fetch("/api/member/session", { method: "DELETE" });
@@ -164,13 +175,14 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshMember = useCallback(async () => {
     const res = await fetch("/api/member/me", { cache: "no-store" });
-    const data = (await res.json()) as { user?: UserProfile | null };
+    const data = (await res.json()) as { user?: UserProfile | null; partner?: MemberPartnerSummary | null };
     if (data.user) setUser(data.user);
+    setPartner(data.partner ?? null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, ready, isAdmin, signup, login, logout, refreshMember }),
-    [user, ready, isAdmin, signup, login, logout, refreshMember],
+    () => ({ user, partner, ready, isAdmin, signup, login, logout, refreshMember }),
+    [user, partner, ready, isAdmin, signup, login, logout, refreshMember],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -8,6 +8,10 @@ export function tyCertOrigin() {
   }
 }
 
+export function normalizeName(value: string) {
+  return value.trim().replace(/\s+/g, "");
+}
+
 export function maskName(name: string) {
   const value = name.trim();
   if (value.length <= 1) return value;
@@ -19,6 +23,20 @@ export function maskPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 7) return "010-****-****";
   return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+}
+
+/** 예: yongho22 → yong****22 */
+export function maskUsername(username: string) {
+  const value = username.trim();
+  if (value.length <= 2) return `${value[0] || ""}****`;
+  if (value.length < 6) return `${value.slice(0, 1)}****${value.slice(-1)}`;
+  return `${value.slice(0, 4)}****${value.slice(-2)}`;
+}
+
+export function alreadyIssuedLoginMessage(username?: string | null) {
+  const masked = username ? maskUsername(username) : "";
+  if (!masked) return "이미 코드가 발급된 분입니다.";
+  return `이미 코드가 발급된 분입니다. ${masked} 아이디로 로그인해 주세요.`;
 }
 
 export function maskDi(di: string) {

@@ -1,5 +1,5 @@
 export const DEFAULT_CHANNEL_SLUG = "channel1";
-export const DEFAULT_ORG_CODE = "611361";
+export const DEFAULT_ORG_CODE = "611441";
 export const CHANNEL_COOKIE = "tyga_partner_ch";
 export const JOIN_CHANNEL_MAX = 20;
 export const CHANNEL_QUERY = "channel";

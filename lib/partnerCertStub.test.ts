@@ -23,6 +23,13 @@ describe("partnerCertStub", () => {
     expect(parsed.certGender).toBe(0);
     expect(parsed.certNational).toBe("0");
     expect(parsed.certDi.startsWith("stub:")).toBe(true);
+    expect(
+      parseStubIdentity({
+        name: "테스트",
+        phone: "01012345678",
+        ssn: `990311${back}`,
+      }),
+    ).toMatchObject({ certDi: parsed.certDi });
   });
 
   it("체크섬이 틀린 주민번호는 거절한다", () => {
