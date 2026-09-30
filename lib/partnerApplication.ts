@@ -13,6 +13,22 @@ export const PARTNER_STATUSES = [
 ] as const;
 export type PartnerApplicationStatus = (typeof PARTNER_STATUSES)[number];
 
+export const PARTNER_STATUS_LABELS: Record<PartnerApplicationStatus, string> = {
+  DRAFT: "작성 중",
+  VERIFIED: "본인인증 완료",
+  CONTRACT: "계약서 작성",
+  SIGNING: "서명 중",
+  CONTRACT_SIGNED: "계약 완료",
+  SUBMITTING: "발급 중",
+  ISSUED: "발급 완료",
+  FAILED: "실패",
+  NEEDS_MANUAL_CHECK: "수동 확인",
+};
+
+export function partnerStatusLabel(status: string) {
+  return PARTNER_STATUS_LABELS[status as PartnerApplicationStatus] || status;
+}
+
 export const AUDIT_EVENTS = [
   "CERT_OPENED",
   "CERT_SUCCESS",

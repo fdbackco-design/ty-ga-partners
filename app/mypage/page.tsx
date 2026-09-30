@@ -1,4 +1,5 @@
 import MyPageAccount from "@/components/MyPageAccount";
+import { memberWithdrawBlocked } from "@/lib/memberWithdraw";
 import { requireMemberUser } from "@/lib/partnerAccess";
 import { getApplicationByUserId, phoneChangeLocked } from "@/lib/partnerApplicationsStore";
 import { listPhoneHistory } from "@/lib/usersStore";
@@ -34,6 +35,7 @@ export default async function MyPage() {
             name={user.name}
             phone={user.phone}
             phoneLocked={phoneChangeLocked(application)}
+            withdrawLocked={memberWithdrawBlocked(application)}
             phoneHistory={phoneHistory}
           />
         </div>

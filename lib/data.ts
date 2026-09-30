@@ -12,6 +12,7 @@ export const ADMIN_NAV = [
   { href: "/resources", label: "자료실" },
   { href: "/inquiries", label: "문의하기" },
   { href: "/admin/partners", label: "사원등록 관리" },
+  { href: "/admin/releases", label: "해촉관리" },
   { href: "/admin/channels", label: "채널 관리" },
 ] as const;
 
@@ -117,7 +118,7 @@ export const COMPANY = {
   email: "ty-life@ty-life.co.kr",
   copyright: "Copyright ⓒ 2026 태양라이프 All rights reserved.",
   blog: "https://blog.naver.com/taeyanglife_",
-  instagram: "https://www.instagram.com/ty_trip_official/",
+  instagram: "https://www.instagram.com/tylife_official_/",
   site: "https://ty-life.co.kr/",
 } as const;
 

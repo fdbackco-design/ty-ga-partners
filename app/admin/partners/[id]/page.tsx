@@ -31,7 +31,7 @@ export default async function AdminPartnerDetailPage({ params }: PageProps) {
     <main className="legal-page">
       <div className="wrap">
         <p className="text-sm text-[var(--sub)]">
-          <Link href="/">홈</Link> / <Link href="/admin/partners">파트너 신청</Link> / 상세
+          <Link href="/">홈</Link> / <Link href="/admin/partners">사원등록 관리</Link> / 상세
         </p>
         <h1 className="legal-title">신청 상세</h1>
         <div className="mt-10">

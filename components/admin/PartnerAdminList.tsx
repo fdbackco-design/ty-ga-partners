@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { formatPhoneDisplay } from "@/lib/auth";
+import { PARTNER_STATUSES, partnerStatusLabel } from "@/lib/partnerApplication";
 
 type Row = {
   id: string;
   status: string;
   name: string | null;
+  phone: string;
   empId: string;
   empCode: string | null;
   orgCode: string;
@@ -20,14 +23,7 @@ type Row = {
 
 type ChannelOption = { slug: string; name: string };
 
-const STATUSES = [
-  "",
-  "CONTRACT_SIGNED",
-  "SUBMITTING",
-  "ISSUED",
-  "FAILED",
-  "NEEDS_MANUAL_CHECK",
-];
+const STATUSES = ["", ...PARTNER_STATUSES];
 
 export default function PartnerAdminList() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -35,7 +31,7 @@ export default function PartnerAdminList() {
   const [status, setStatus] = useState("");
   const [channel, setChannel] = useState("");
   const [q, setQ] = useState("");
-  const [manual, setManual] = useState(true);
+  const [manual, setManual] = useState(false);
   const [error, setError] = useState("");
 
   const query = useMemo(() => {
@@ -93,7 +89,7 @@ export default function PartnerAdminList() {
         <select value={status} disabled={manual} onChange={(e) => setStatus(e.target.value)}>
           {STATUSES.map((item) => (
             <option key={item || "all"} value={item}>
-              {item || "전체 상태"}
+              {item ? partnerStatusLabel(item) : "전체 상태"}
             </option>
           ))}
         </select>
@@ -114,6 +110,7 @@ export default function PartnerAdminList() {
             <tr>
               <th>상태</th>
               <th>성명</th>
+              <th>전화번호</th>
               <th>아이디</th>
               <th>코드</th>
               <th>채널</th>
@@ -123,15 +120,16 @@ export default function PartnerAdminList() {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6}>해당하는 신청이 없습니다.</td>
+                <td colSpan={7}>해당하는 신청이 없습니다.</td>
               </tr>
             ) : (
               rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <Link href={`/admin/partners/${row.id}`}>{row.status}</Link>
+                    <Link href={`/admin/partners/${row.id}`}>{partnerStatusLabel(row.status)}</Link>
                   </td>
                   <td>{row.name || "-"}</td>
+                  <td>{row.phone ? formatPhoneDisplay(row.phone) : "-"}</td>
                   <td>{row.empId || "-"}</td>
                   <td>{row.empCode || "-"}</td>
                   <td>{row.channelSlug || row.joinChannel}</td>

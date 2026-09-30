@@ -20,19 +20,23 @@ export async function GET(request: Request) {
   const users = await findUsersByIds(applications.map((item) => item.userId));
   const userMap = new Map(users.map((user) => [user.id, user]));
   return NextResponse.json({
-    applications: applications.map((item) => ({
-      id: item.id,
-      status: item.status,
-      name: item.certName,
-      empId: item.empId || userMap.get(item.userId)?.username || "",
-      empCode: item.empCode,
-      orgCode: item.orgCode,
-      joinChannel: item.joinChannel,
-      channelSlug: item.channelSlug,
-      issuedAt: item.issuedAt,
-      signedAt: item.signedAt,
-      updatedAt: item.updatedAt,
-      lastErrorMessage: item.lastErrorMessage,
-    })),
+    applications: applications.map((item) => {
+      const user = userMap.get(item.userId);
+      return {
+        id: item.id,
+        status: item.status,
+        name: item.certName,
+        phone: user?.phone || item.certMobile || "",
+        empId: item.empId || user?.username || "",
+        empCode: item.empCode,
+        orgCode: item.orgCode,
+        joinChannel: item.joinChannel,
+        channelSlug: item.channelSlug,
+        issuedAt: item.issuedAt,
+        signedAt: item.signedAt,
+        updatedAt: item.updatedAt,
+        lastErrorMessage: item.lastErrorMessage,
+      };
+    }),
   });
 }
