@@ -93,13 +93,14 @@ export async function getInquiry(id: string) {
 
 export async function saveInquiry(item: Inquiry) {
   if (useBlob()) {
-    await writeBlobItem(item);
-    try {
-      const next = [item, ...(await readBlob()).filter((row) => row.id !== item.id)];
-      await writeBlobIndex(next);
-    } catch (error) {
-      console.error("[inquiries] 목록 인덱스 갱신 실패", error);
-    }
+    await Promise.all([
+      writeBlobItem(item),
+      readBlobIndex()
+        .then((existing) => writeBlobIndex([item, ...existing.filter((row) => row.id !== item.id)]))
+        .catch((error) => {
+          console.error("[inquiries] 목록 인덱스 갱신 실패", error);
+        }),
+    ]);
     return item;
   }
   const items = await readLocal();

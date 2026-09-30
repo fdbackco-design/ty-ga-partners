@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseReleaseInput, releaseStatusLabel } from "./releases";
+import { isGuestRelease, normalizeStoredRelease, parseReleaseInput, releaseStatusLabel } from "./releases";
 
 describe("parseReleaseInput", () => {
   it("requires name, phone, and privacy agreement", () => {
@@ -27,5 +27,23 @@ describe("releaseStatusLabel", () => {
   it("returns Korean labels", () => {
     expect(releaseStatusLabel("RECEIVED")).toBe("접수");
     expect(releaseStatusLabel("DONE")).toBe("처리완료");
+  });
+});
+
+describe("isGuestRelease", () => {
+  it("회원 연결이 없으면 미로그인으로 본다", () => {
+    const guest = normalizeStoredRelease({
+      id: "r-1",
+      userId: null,
+      name: "홍길동",
+      phone: "01012345678",
+      memo: "",
+      privacyAgreed: true,
+      status: "RECEIVED",
+      createdAt: "2026-09-30T00:00:00.000Z",
+      updatedAt: "2026-09-30T00:00:00.000Z",
+    });
+    expect(isGuestRelease(guest)).toBe(true);
+    expect(isGuestRelease({ ...guest, userId: "user-1" })).toBe(false);
   });
 });

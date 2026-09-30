@@ -12,6 +12,7 @@ export const RELEASE_STATUS_LABELS: Record<ReleaseStatus, string> = {
 
 export type ReleaseRequest = {
   id: string;
+  userId: string | null;
   name: string;
   phone: string;
   memo: string;
@@ -20,6 +21,10 @@ export type ReleaseRequest = {
   createdAt: string;
   updatedAt: string;
 };
+
+export function isGuestRelease(item: { userId?: string | null }) {
+  return !item.userId;
+}
 
 export function releaseStatusLabel(status: string) {
   return RELEASE_STATUS_LABELS[status as ReleaseStatus] || status;
@@ -49,6 +54,7 @@ export function normalizeStoredRelease(item: ReleaseRequest): ReleaseRequest {
   const status = RELEASE_STATUSES.includes(item.status) ? item.status : "RECEIVED";
   return {
     id: item.id,
+    userId: item.userId || null,
     name: item.name || "",
     phone: digitsOnly(item.phone || ""),
     memo: item.memo || "",

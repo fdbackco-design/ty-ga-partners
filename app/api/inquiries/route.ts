@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import {
   MAX_INQUIRY_ATTACHMENTS,
   MAX_INQUIRY_FILE_BYTES,
@@ -27,32 +27,38 @@ async function attachmentsFromFiles(id: string, files: File[]) {
   if (files.length > MAX_INQUIRY_ATTACHMENTS) {
     throw new Error(`파일은 최대 ${MAX_INQUIRY_ATTACHMENTS}개까지 첨부할 수 있습니다.`);
   }
-  const attachments: InquiryAttachment[] = [];
-  for (const [index, file] of files.entries()) {
+  for (const file of files) {
     if (isBlockedFile(file.name)) {
       throw new Error("허용되지 않는 파일 형식입니다.");
     }
     if (file.size > MAX_INQUIRY_FILE_BYTES) {
       throw new Error("첨부 파일은 각 10MB까지 업로드할 수 있습니다.");
     }
-    const fileName = `${index + 1}-${safeFileName(file.name)}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    attachments.push({
-      name: safeFileName(file.name),
-      url: await saveLocalInquiryFile(id, fileName, buffer),
-      size: file.size,
-      kind: attachmentKind(file.name, file.type),
-    });
   }
-  return attachments;
+  return Promise.all(
+    files.map(async (file, index) => {
+      const fileName = `${index + 1}-${safeFileName(file.name)}`;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      return {
+        name: safeFileName(file.name),
+        url: await saveLocalInquiryFile(id, fileName, buffer),
+        size: file.size,
+        kind: attachmentKind(file.name, file.type),
+      } satisfies InquiryAttachment;
+    }),
+  );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const storage = usingBlob() ? "blob" : "local";
+  if (new URL(request.url).searchParams.get("storageOnly")) {
+    return NextResponse.json({ storage });
+  }
   const viewer = await getViewer();
   const items = await getInquiries();
   return NextResponse.json({
     items: items.map((item) => toInquirySummary(item, viewer)),
-    storage: usingBlob() ? "blob" : "local",
+    storage,
   });
 }
 
@@ -137,10 +143,10 @@ export async function POST(request: Request) {
     console.error("[inquiries] 저장 실패", error);
     return NextResponse.json({ error: "문의 저장에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
-  try {
-    await sendInquiryNotice(item);
-  } catch (error) {
-    console.error("[mail] 문의 알림 메일 발송 실패", error);
-  }
+  after(() =>
+    sendInquiryNotice(item).catch((error) => {
+      console.error("[mail] 문의 알림 메일 발송 실패", error);
+    }),
+  );
   return NextResponse.json({ item });
 }

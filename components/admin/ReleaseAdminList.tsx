@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatPhoneDisplay } from "@/lib/auth";
-import { releaseStatusLabel, type ReleaseRequest, type ReleaseStatus } from "@/lib/releases";
+import { isGuestRelease, releaseStatusLabel, type ReleaseRequest, type ReleaseStatus } from "@/lib/releases";
 
 export default function ReleaseAdminList() {
   const [rows, setRows] = useState<ReleaseRequest[]>([]);
@@ -80,7 +80,12 @@ export default function ReleaseAdminList() {
               rows.map((row) => (
                 <tr key={row.id}>
                   <td>{releaseStatusLabel(row.status)}</td>
-                  <td>{row.name}</td>
+                  <td>
+                    <span className="admin-name-cell">
+                      {isGuestRelease(row) ? <span className="inquiry-lock">미로그인</span> : null}
+                      {row.name}
+                    </span>
+                  </td>
                   <td>{row.phone ? formatPhoneDisplay(row.phone) : "-"}</td>
                   <td className="admin-memo">{row.memo || "-"}</td>
                   <td>{new Date(row.createdAt).toLocaleString("ko-KR")}</td>

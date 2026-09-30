@@ -3,6 +3,11 @@ import { del, get, put } from "@vercel/blob";
 type BlobAccess = "public" | "private";
 
 const ACCESS_ORDER: BlobAccess[] = ["private", "public"];
+let cachedAccess: BlobAccess | null = null;
+
+function accessOrder() {
+  return cachedAccess ? [cachedAccess, ...ACCESS_ORDER.filter((access) => access !== cachedAccess)] : ACCESS_ORDER;
+}
 
 function putOptions(
   access: BlobAccess,
@@ -27,9 +32,11 @@ export async function putBlobFile(
   },
 ) {
   let lastError: unknown;
-  for (const access of ACCESS_ORDER) {
+  for (const access of accessOrder()) {
     try {
-      return await put(pathname, body, putOptions(access, options));
+      const result = await put(pathname, body, putOptions(access, options));
+      cachedAccess = access;
+      return result;
     } catch (error) {
       lastError = error;
     }
@@ -38,10 +45,13 @@ export async function putBlobFile(
 }
 
 export async function getBlobResult(pathname: string) {
-  for (const access of ACCESS_ORDER) {
+  for (const access of accessOrder()) {
     try {
       const result = await get(pathname, { access, useCache: false });
-      if (result?.statusCode === 200 && result.stream) return result;
+      if (result?.statusCode === 200 && result.stream) {
+        cachedAccess = access;
+        return result;
+      }
     } catch {
       // store access mode may not match; try the other
     }

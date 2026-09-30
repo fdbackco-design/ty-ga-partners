@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSignedInMemberUser } from "@/lib/partnerAccess";
 import { parseReleaseInput } from "@/lib/releases";
 import { addRelease, usingBlob } from "@/lib/releasesStore";
 
@@ -24,6 +25,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const item = await addRelease({ name: parsed.name, phone: parsed.phone, memo: parsed.memo });
-  return NextResponse.json({ ok: true, id: item.id });
+  const member = await getSignedInMemberUser();
+  const item = await addRelease({
+    name: parsed.name,
+    phone: parsed.phone,
+    memo: parsed.memo,
+    userId: member?.id || null,
+  });
+  return NextResponse.json({ ok: true, id: item.id, guest: !member });
 }

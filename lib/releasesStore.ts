@@ -61,10 +61,11 @@ export async function getReleases() {
   return [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function addRelease(input: { name: string; phone: string; memo: string }) {
+export async function addRelease(input: { name: string; phone: string; memo: string; userId?: string | null }) {
   const now = new Date().toISOString();
   const item: ReleaseRequest = {
     id: crypto.randomUUID(),
+    userId: input.userId || null,
     name: input.name,
     phone: input.phone,
     memo: input.memo,
@@ -76,6 +77,11 @@ export async function addRelease(input: { name: string; phone: string; memo: str
   const items = await readAll();
   await writeAll([item, ...items]);
   return item;
+}
+
+export async function getReleasesByUserId(userId: string) {
+  if (!userId) return [] as ReleaseRequest[];
+  return (await getReleases()).filter((item) => item.userId === userId);
 }
 
 export async function updateReleaseStatus(id: string, status: ReleaseStatus) {
