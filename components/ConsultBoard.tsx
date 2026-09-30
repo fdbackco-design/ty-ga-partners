@@ -53,7 +53,6 @@ export default function ConsultBoard({
                 {isAdmin ? <th className="col-birth">생년월일</th> : null}
                 {isAdmin ? <th className="col-phone">연락처</th> : null}
                 <th className="col-date">작성일</th>
-                <th className="col-status">답변</th>
               </tr>
             </thead>
             <tbody>
@@ -70,11 +69,6 @@ export default function ConsultBoard({
                   {isAdmin ? <td className="col-birth">{formatConsultBirthdate(item.birthdate) || "-"}</td> : null}
                   {isAdmin ? <td className="col-phone">{formatConsultPhone(item.phone) || "-"}</td> : null}
                   <td className="col-date">{item.createdAt.slice(0, 10)}</td>
-                  <td className="col-status">
-                    <span className={item.answered ? "inquiry-badge is-done" : "inquiry-badge"}>
-                      {item.answered ? "답변완료" : "대기"}
-                    </span>
-                  </td>
                 </tr>
               ))}
             </tbody>

@@ -74,10 +74,11 @@ export default function ConsultForm() {
             inputMode="numeric"
             autoComplete="tel"
             placeholder="01012345678"
+            maxLength={11}
             value={phone}
             onChange={(e) => setPhone(digitsOnly(e.target.value).slice(0, 11))}
           />
-          <p className="mt-1 text-xs text-[var(--sub)]">- 없이 숫자만 입력해 주세요.</p>
+          <p className="mt-1 text-xs text-[var(--sub)]">010 번호는 11자리, - 없이 숫자만 입력해 주세요.</p>
         </div>
         <div className="span-2">
           <label htmlFor="consult-content">
@@ -93,7 +94,7 @@ export default function ConsultForm() {
           />
         </div>
         <div className="span-2">
-          <p className="mt-1 text-sm text-[var(--sub)]">로그인 없이 접수할 수 있습니다. 내용은 신청자와 관리자만 확인할 수 있습니다.</p>
+          <p className="mt-1 text-sm text-[var(--sub)]">접수하신 전화번호로 답변드리겠습니다.</p>
         </div>
       </div>
       {error ? <p className="mt-4 text-sm text-[#dc3545]">{error}</p> : null}

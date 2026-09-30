@@ -2,6 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { UserProfile } from "@/lib/auth";
 import { digitsOnly } from "@/lib/auth";
 import { normalizeName } from "@/lib/partnerCert";
+import { SIGNUP_DUPLICATE_MESSAGE, sameNameAndBirthdate } from "@/lib/signupIdentity";
 import { getSupabaseAdmin, type UserRow } from "@/lib/supabase";
 
 export type StoredUser = UserProfile & {
@@ -98,6 +99,20 @@ export async function findUsersByIdentity(input: {
     .sort((a, b) => a.username.localeCompare(b.username, "en"));
 }
 
+export async function findUsersByNameAndBirthdate(input: {
+  name: string;
+  rrnFront: string;
+  rrnBackFirst: string;
+}) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("ga_users").select("*").eq("rrn_front", input.rrnFront);
+  if (error) throw new Error(error.message);
+  return (data || [])
+    .map(toUser)
+    .filter((user) => sameNameAndBirthdate(user, input))
+    .sort((a, b) => a.username.localeCompare(b.username, "en"));
+}
+
 export async function createUser(input: {
   username: string;
   password: string;
@@ -109,6 +124,14 @@ export async function createUser(input: {
 }) {
   if (await findUserByUsername(input.username)) {
     throw new Error("이미 사용 중인 아이디입니다.");
+  }
+  const samePerson = await findUsersByNameAndBirthdate({
+    name: input.name,
+    rrnFront: input.rrnFront,
+    rrnBackFirst: input.rrnBackFirst,
+  });
+  if (samePerson.length) {
+    throw new Error(SIGNUP_DUPLICATE_MESSAGE);
   }
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
