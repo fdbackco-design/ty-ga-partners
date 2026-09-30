@@ -1,3 +1,5 @@
+import { validatePhone } from "@/lib/auth";
+
 export const MAX_CONSULT_CONTENT = 5000;
 export const MAX_CONSULT_REPLY_CHARS = 5000;
 export const MAX_CONSULT_NAME = 40;
@@ -84,12 +86,7 @@ export function validateConsultBirthdate(value: string) {
 }
 
 export function validateConsultPhone(value: string) {
-  const phone = normalizeConsultPhone(value);
-  if (!phone) return "전화번호를 입력해 주세요.";
-  if (!/^01[016789]\d{7,8}$/.test(phone)) {
-    return "전화번호는 010 등 휴대폰 번호, 숫자만 입력해 주세요.";
-  }
-  return "";
+  return validatePhone(value);
 }
 
 export function validateConsultContent(value: string) {
@@ -114,6 +111,12 @@ export function canViewConsultation(item: Consultation, access: ConsultationAcce
   if (!access) return false;
   if (access.isAdmin) return true;
   return access.ownedIds.includes(item.id);
+}
+
+export function listVisibleConsultations(items: Consultation[], access: ConsultationAccess | null) {
+  if (access?.isAdmin) return items;
+  const owned = new Set(access?.ownedIds || []);
+  return items.filter((item) => owned.has(item.id));
 }
 
 export function canManageConsultation(item: Consultation, access: ConsultationAccess | null) {

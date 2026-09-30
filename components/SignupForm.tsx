@@ -134,7 +134,9 @@ export default function SignupForm() {
               ●●●●●●
             </span>
           </div>
-          <p className="mt-1 text-xs text-[var(--sub)]">앞 6자리와 뒤 첫 1자리만 입력합니다.</p>
+          <p className="mt-1 text-xs text-[var(--sub)]">
+            앞 6자리와 뒤 첫 1자리만 입력합니다. 이름과 생년월일이 같으면 휴대폰이 달라도 한 번만 가입할 수 있습니다.
+          </p>
         </div>
       </div>
       {error ? <p className="mt-4 text-sm text-[#dc3545]">{error}</p> : null}

@@ -75,11 +75,12 @@ export async function POST(request: Request) {
     return res;
   } catch (error) {
     const message = error instanceof Error ? error.message : "회원가입에 실패했습니다.";
-    const status = message.includes("이미 사용 중")
-      ? 409
-      : message.includes("Supabase가 설정되지 않았습니다")
-        ? 503
-        : 500;
+    const status =
+      message.includes("이미 사용 중") || message.includes("이미 가입된")
+        ? 409
+        : message.includes("Supabase가 설정되지 않았습니다")
+          ? 503
+          : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   canViewConsultation,
   consultListTitle,
+  listVisibleConsultations,
   toConsultationSummary,
   validateConsultBirthdate,
+  validateConsultPhone,
   type Consultation,
 } from "./consultations";
 
@@ -23,6 +25,15 @@ describe("canViewConsultation", () => {
     expect(canViewConsultation(item, { isAdmin: false, ownedIds: [] })).toBe(false);
     expect(canViewConsultation(item, { isAdmin: false, ownedIds: ["c-1"] })).toBe(true);
     expect(canViewConsultation(item, { isAdmin: true, ownedIds: [] })).toBe(true);
+  });
+});
+
+describe("listVisibleConsultations", () => {
+  it("다른 사람에게는 목록 자체를 숨긴다", () => {
+    expect(listVisibleConsultations([item], null)).toEqual([]);
+    expect(listVisibleConsultations([item], { isAdmin: false, ownedIds: [] })).toEqual([]);
+    expect(listVisibleConsultations([item], { isAdmin: false, ownedIds: ["c-1"] })).toEqual([item]);
+    expect(listVisibleConsultations([item], { isAdmin: true, ownedIds: [] })).toEqual([item]);
   });
 });
 
@@ -52,6 +63,13 @@ describe("validateConsultBirthdate", () => {
     expect(validateConsultBirthdate("1990-03-11")).toBe("");
     expect(validateConsultBirthdate("1990-13-11")).toBe("생년월일을 다시 확인해 주세요.");
     expect(validateConsultBirthdate("")).toBe("생년월일을 입력해 주세요.");
+  });
+});
+
+describe("validateConsultPhone", () => {
+  it("010은 11자리만 받는다", () => {
+    expect(validateConsultPhone("01012345678")).toBe("");
+    expect(validateConsultPhone("0101234567")).toBe("010 번호는 11자리로 입력해 주세요.");
   });
 });
 

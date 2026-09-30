@@ -1,4 +1,3 @@
-import ConsultBoard from "@/components/ConsultBoard";
 import ConsultForm from "@/components/ConsultForm";
 import Link from "next/link";
 
@@ -19,9 +18,6 @@ export default function ConsultPage() {
         </p>
         <div className="mt-10">
           <ConsultForm />
-        </div>
-        <div className="legal-body is-wide mt-16">
-          <ConsultBoard />
         </div>
       </div>
     </main>

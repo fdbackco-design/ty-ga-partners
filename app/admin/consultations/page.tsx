@@ -19,7 +19,7 @@ export default async function AdminConsultationsPage() {
           <Link href="/">홈</Link> / 상담관리
         </p>
         <h1 className="legal-title">상담관리</h1>
-        <p className="mt-3 text-[var(--sub)]">접수된 상담신청을 확인하고 답글을 남겨 주세요.</p>
+        <p className="mt-3 text-[var(--sub)]">접수된 상담신청을 확인하고 연락처로 답변해 주세요.</p>
         <div className="legal-body is-wide">
           <ConsultBoard itemHrefBase="/admin/consultations" showWrite={false} />
         </div>

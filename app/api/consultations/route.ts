@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  listVisibleConsultations,
   toConsultationSummary,
   toPublicConsultation,
   validateConsultBirthdate,
@@ -16,7 +17,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   const access = await getConsultAccess();
-  const items = await getConsultations();
+  const items = listVisibleConsultations(await getConsultations(), access);
   return NextResponse.json({
     items: items.map((item) => toConsultationSummary(item, access)),
   });
