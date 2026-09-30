@@ -1,4 +1,6 @@
-import { upload, type PutBlobResult } from "@vercel/blob/client";
+import { upload } from "@vercel/blob/client";
+
+type ClientBlob = Awaited<ReturnType<typeof upload>>;
 
 type BlobAccess = "private" | "public";
 
@@ -14,7 +16,7 @@ function uploadOptions(handleUploadUrl: string, file: File, access: BlobAccess) 
   } as const;
 }
 
-export async function uploadClientBlob(pathname: string, file: File, handleUploadUrl: string): Promise<PutBlobResult> {
+export async function uploadClientBlob(pathname: string, file: File, handleUploadUrl: string): Promise<ClientBlob> {
   const known = rememberedAccess.get(handleUploadUrl);
   const order = known ? [known, ...ACCESS_ORDER.filter((access) => access !== known)] : ACCESS_ORDER;
   let lastError: unknown;
