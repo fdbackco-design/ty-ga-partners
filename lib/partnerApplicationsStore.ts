@@ -95,7 +95,7 @@ export async function saveVerifiedApplication(
     .select("*")
     .single();
   if (error) {
-    if (error.code === "23505") throw new Error("이미 코드가 발급된 분입니다");
+    if (error.code === "23505") throw new Error("이미 코드가 발급된 분입니다.");
     throw new Error(error.message);
   }
   return toApplication(data);
@@ -138,6 +138,19 @@ export async function countCertAttempts(userId: string, windowMs = 60 * 60 * 100
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .in("event", CERT_ATTEMPT_EVENTS)
+    .gte("created_at", since);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+export async function countRecoverAttemptsByIp(ip: string, windowMs = 60 * 60 * 1000) {
+  const supabase = getSupabaseAdmin();
+  const since = new Date(Date.now() - windowMs).toISOString();
+  const { count, error } = await supabase
+    .from("application_audit_logs")
+    .select("*", { count: "exact", head: true })
+    .eq("event", "ACCOUNT_RECOVER")
+    .eq("ip", ip)
     .gte("created_at", since);
   if (error) throw new Error(error.message);
   return count ?? 0;

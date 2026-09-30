@@ -1,9 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatKstDateTime } from "@/lib/formatDate";
+import { issueFailCopy } from "@/lib/issue/failReason";
 import type { PublicIssueView } from "@/lib/partnerApplication";
 import { COMPANY } from "@/lib/data";
+import SystemLoginGuide from "@/components/SystemLoginGuide";
+import HqChangeGuide from "@/components/HqChangeGuide";
 
 type IssueResponse = {
   ok?: boolean;
@@ -117,6 +121,8 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
             <dd>{formatKstDateTime(view.issuedAt)}</dd>
           </div>
         </dl>
+        <SystemLoginGuide username={view.empId} />
+        <HqChangeGuide />
         {view.docToken ? (
           <a className="btn-apply issue-download" href={`/api/partners/doc/${view.docToken}`}>
             계약서 PDF 다운로드
@@ -136,16 +142,28 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
   }
 
   if (view.status === "FAILED") {
+    const copy = issueFailCopy(view.failKind || "failed");
     return (
       <div className="issue-panel">
-        <p className="partner-apply-alert">정보가 일치하지 않아 발급에 실패했습니다.</p>
-        <p className="partner-apply-hint">성명·주민번호·휴대폰이 맞는지 확인한 뒤 다시 신청해 주세요.</p>
-        <div className="partner-apply-cta">
-          <button type="button" className="btn-apply" onClick={() => setModal(true)}>
-            다시 신청
-          </button>
-        </div>
-        {modal ? (
+        <p className="partner-apply-alert">{copy.title}</p>
+        <p className="partner-apply-hint">{copy.hint}</p>
+        {copy.retry ? (
+          <div className="partner-apply-cta">
+            <button type="button" className="btn-apply" onClick={() => setModal(true)}>
+              다시 신청
+            </button>
+          </div>
+        ) : (
+          <div className="partner-apply-cta issue-fail-actions">
+            <Link href="/login" className="btn-apply">
+              기존 아이디로 로그인
+            </Link>
+            <Link href="/login/find-id" className="contract-ghost">
+              아이디 찾기
+            </Link>
+          </div>
+        )}
+        {copy.retry && modal ? (
           <IssueConfirmModal
             view={view}
             checked={checked}

@@ -12,6 +12,7 @@ import {
   validateUsername,
 } from "@/lib/auth";
 import { MEMBER_COOKIE, createMemberToken, memberCookieOptions, memberSessionFromUser } from "@/lib/member";
+import { memberPartnerSummary } from "@/lib/partnerApplication";
 import { createUser, toProfile } from "@/lib/usersStore";
 
 export const runtime = "nodejs";
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       channel: resolved.channel.slug,
     });
     const profile = toProfile(user);
-    const res = NextResponse.json({ ok: true, user: profile });
+    const res = NextResponse.json({ ok: true, user: profile, partner: memberPartnerSummary(null, user.username) });
     res.cookies.set(MEMBER_COOKIE, createMemberToken(memberSessionFromUser(user)), memberCookieOptions());
     return res;
   } catch (error) {

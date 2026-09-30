@@ -32,10 +32,11 @@ export async function GET(request: Request, context: RouteContext) {
     userAgent: clientUserAgent(request),
   });
   const fileName = `TY_위촉계약서_${application.certName || "계약"}_${application.id.slice(0, 8)}.pdf`;
+  const inline = new URL(request.url).searchParams.get("view") === "1";
   return new NextResponse(new Uint8Array(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(fileName)}`,
       "Cache-Control": "private, no-store",
       "X-Robots-Tag": "noindex, nofollow",
     },

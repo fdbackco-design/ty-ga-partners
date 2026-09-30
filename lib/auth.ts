@@ -29,7 +29,13 @@ export function validateName(value: string) {
 export function validatePhone(value: string) {
   const phone = value.replace(/\D/g, "");
   if (!phone) return "전화번호를 입력해 주세요.";
-  if (!/^01[016789]\d{7,8}$/.test(phone)) {
+  if (phone.startsWith("010")) {
+    if (!/^010\d{8}$/.test(phone)) {
+      return "010 번호는 11자리로 입력해 주세요.";
+    }
+    return "";
+  }
+  if (!/^01[16789]\d{7,8}$/.test(phone)) {
     return "전화번호는 010 등 휴대폰 번호, 숫자만 입력해 주세요.";
   }
   return "";

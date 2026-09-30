@@ -13,6 +13,7 @@ export const ADMIN_NAV = [
   { href: "/inquiries", label: "문의하기" },
   { href: "/admin/partners", label: "사원등록 관리" },
   { href: "/admin/releases", label: "해촉관리" },
+  { href: "/admin/consultations", label: "상담관리" },
   { href: "/admin/channels", label: "채널 관리" },
 ] as const;
 

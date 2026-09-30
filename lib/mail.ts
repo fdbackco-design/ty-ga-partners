@@ -68,6 +68,67 @@ export async function sendInquiryNotice(item: {
   return true;
 }
 
+export async function sendConsultNotice(item: {
+  id: string;
+  name: string;
+  birthdate: string;
+  phone: string;
+  content: string;
+}) {
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!user || !pass) {
+    console.warn("[mail] SMTP_USER/SMTP_PASS가 없어 상담신청 알림 메일을 건너뜁니다.");
+    return false;
+  }
+
+  const site = getSiteUrl();
+  const link = `${site}/admin/consultations/${item.id}`;
+  const phone = formatInquiryPhone(item.phone || "") || "(전화번호 없음)";
+  const content = item.content.trim() || "(내용 없음)";
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
+  const fromAddress = process.env.MAIL_FROM || user;
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port,
+    secure,
+    auth: { user, pass },
+  });
+
+  await transporter.sendMail({
+    from: `"TY파트너스" <${fromAddress}>`,
+    to: INQUIRY_NOTIFY_EMAIL,
+    subject: `[TY파트너스] 새 상담신청: ${item.name}`,
+    text: [
+      "상담신청이 접수되었습니다.",
+      "",
+      `이름: ${item.name}`,
+      `생년월일: ${item.birthdate}`,
+      `전화번호: ${phone}`,
+      "",
+      "상담 내용:",
+      content,
+      "",
+      `관리 페이지: ${link}`,
+    ].join("\n"),
+    html: `
+      <p>상담신청이 접수되었습니다.</p>
+      <p>
+        <strong>이름</strong> ${escapeHtml(item.name)}<br />
+        <strong>생년월일</strong> ${escapeHtml(item.birthdate)}<br />
+        <strong>전화번호</strong> ${escapeHtml(phone)}
+      </p>
+      <p><strong>상담 내용</strong></p>
+      <p>${escapeHtml(content).replace(/\n/g, "<br />")}</p>
+      <p><a href="${escapeHtml(link)}">관리 페이지에서 확인하기</a><br />
+      ${escapeHtml(link)}</p>
+    `,
+  });
+  return true;
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")

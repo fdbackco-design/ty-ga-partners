@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import { alreadyIssuedMessageForDi, alreadyIssuedMessageForUserId } from "@/lib/issuedAccount";
 import { getSignedInMemberUser, preparePartnerApplication } from "@/lib/partnerAccess";
 import {
   countCertAttempts,
@@ -10,7 +10,8 @@ import {
 } from "@/lib/partnerApplicationsStore";
 import { encryptSecret } from "@/lib/crypto";
 import { maskSsn } from "@/lib/contract/validate";
-import { digitsOnly, isEnctimeFresh, maskDi } from "@/lib/partnerCert";
+import { niceCertPayloadSchema } from "@/lib/niceCert";
+import { digitsOnly, isEnctimeFresh, maskDi, normalizeName } from "@/lib/partnerCert";
 import { CERT_STUB_RESPONSE_NO, parseStubIdentity, partnerCertStubEnabled } from "@/lib/partnerCertStub";
 import { createVerifyToken, VERIFY_COOKIE, verifyCookieOptions } from "@/lib/partnerVerifyToken";
 import { clientIp, clientUserAgent } from "@/lib/requestMeta";
@@ -19,28 +20,6 @@ import { birthdateFromRrn, ssnGenderCode } from "@/utils/ssn";
 export const runtime = "nodejs";
 
 const MAX_ATTEMPTS_PER_HOUR = 5;
-
-const nicePayloadSchema = z.object({
-  errorMsg: z.string().optional(),
-  authtype: z.string().optional(),
-  nationalinfo: z.union([z.string(), z.number()]).transform((value) => String(value)),
-  responseno: z.string().optional().default(""),
-  resultcode: z.string(),
-  enctime: z.string(),
-  requestno: z.string().optional(),
-  mobileco: z.string().optional(),
-  mobileno: z.string(),
-  sitecode: z.string().optional(),
-  di: z.string(),
-  receivedata: z.string().optional(),
-  birthdate: z.string(),
-  gender: z.coerce.number(),
-  name: z.string(),
-});
-
-function normalizeName(value: string) {
-  return value.trim().replace(/\s+/g, "");
-}
 
 async function finishVerified(
   user: NonNullable<Awaited<ReturnType<typeof getSignedInMemberUser>>>,
@@ -97,6 +76,21 @@ export async function POST(request: Request) {
       if (attempts >= MAX_ATTEMPTS_PER_HOUR) {
         return NextResponse.json({ error: "인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요." }, { status: 429 });
       }
+      const issued = await getIssuedApplicationByDi(parsed.certDi);
+      if (issued) {
+        if (issued.userId !== user.id) {
+          await markApplicationFailed(application.id);
+        }
+        await writeAuditLog({
+          applicationId: application.id,
+          userId: user.id,
+          event: "CERT_DUPLICATE_DI",
+          meta: { stub: true, diPrefix: maskDi(parsed.certDi) },
+          ip,
+          userAgent,
+        });
+        return NextResponse.json({ error: await alreadyIssuedMessageForUserId(issued.userId) }, { status: 409 });
+      }
       return await finishVerified(
         user,
         application,
@@ -118,11 +112,14 @@ export async function POST(request: Request) {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "테스트 본인인증에 실패했습니다.";
+      if (message.includes("이미 코드가 발급된")) {
+        return NextResponse.json({ error: await alreadyIssuedMessageForDi(parsed.certDi) }, { status: 409 });
+      }
       return NextResponse.json({ error: message }, { status: 500 });
     }
   }
 
-  const parsed = nicePayloadSchema.safeParse(raw);
+  const parsed = niceCertPayloadSchema.safeParse(raw);
   if (!parsed.success) {
     await writeAuditLog({
       userId: user.id,
@@ -203,7 +200,7 @@ export async function POST(request: Request) {
         ip,
         userAgent,
       });
-      return NextResponse.json({ error: "이미 코드가 발급된 분입니다" }, { status: 409 });
+      return NextResponse.json({ error: await alreadyIssuedMessageForUserId(issued.userId) }, { status: 409 });
     }
 
     const saved = await saveVerifiedApplication(application, {
@@ -244,7 +241,7 @@ export async function POST(request: Request) {
       userAgent,
     });
     if (message.includes("이미 코드가 발급된")) {
-      return NextResponse.json({ error: "이미 코드가 발급된 분입니다" }, { status: 409 });
+      return NextResponse.json({ error: await alreadyIssuedMessageForDi(payload.di) }, { status: 409 });
     }
     return NextResponse.json({ error: message }, { status: 500 });
   }

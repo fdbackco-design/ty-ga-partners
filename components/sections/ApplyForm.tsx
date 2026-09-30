@@ -1,16 +1,23 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Reveal from "../Reveal";
 import PrivacyPolicyBox from "../PrivacyPolicyBox";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly } from "@/lib/auth";
+import { contractDocHref } from "@/lib/partnerApplication";
+import SystemLoginGuide from "@/components/SystemLoginGuide";
+import HqChangeGuide from "@/components/HqChangeGuide";
 
 const APPLY_NEXT = "/partners/apply";
+const APPLY_VERIFY_NEXT = "/partners/apply/verify";
+const APPLY_LOGIN_HREF = `/login?next=${encodeURIComponent(APPLY_VERIFY_NEXT)}`;
+const APPLY_SIGNUP_HREF = `/signup?next=${encodeURIComponent(APPLY_VERIFY_NEXT)}`;
 
 export default function ApplyForm() {
-  const { user, ready } = useAuth();
+  const { user, partner, ready } = useAuth();
   const router = useRouter();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -35,14 +42,11 @@ export default function ApplyForm() {
     setRrnBackFirst("");
   }, [user, ready]);
 
+  const issued = Boolean(ready && partner?.issued);
+
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!ready || pending) return;
-
-    if (!user) {
-      router.push(`/login?next=${encodeURIComponent(APPLY_NEXT)}`);
-      return;
-    }
+    if (!ready || pending || !user) return;
 
     const data = new FormData(e.currentTarget);
     const agree = data.get("agree");
@@ -69,16 +73,58 @@ export default function ApplyForm() {
       <div className="wrap">
         <Reveal>
           <h2 className="apply-title text-center text-[36px] md:text-[48px] font-extrabold tracking-[-0.04em] text-[#ff6845]">
-            TY 파트너스 등록하기
+            {issued ? "발급 완료" : "TY 파트너스 등록하기"}
           </h2>
         </Reveal>
         <Reveal delay={80}>
-          <form className="form-card" onSubmit={onSubmit}>
-            {!user && (
-              <p className="mb-5 text-sm text-[var(--sub)]">
-                신청하려면 로그인이 필요합니다. 회원이 아니라면 회원가입 후 본인인증과 위촉계약서 작성으로 이어집니다.
+          {issued && partner ? (
+            <div className="form-card issued-apply">
+              <p className="issued-apply-lead">사원코드가 발급되었습니다.</p>
+              <dl className="partner-apply-id">
+                <div>
+                  <dt>아이디</dt>
+                  <dd>{partner.empId}</dd>
+                </div>
+                <div>
+                  <dt>사원코드</dt>
+                  <dd>{partner.empCode || "-"}</dd>
+                </div>
+              </dl>
+              <SystemLoginGuide username={partner.empId} />
+              <HqChangeGuide />
+              {partner.docToken ? (
+                <a
+                  className="btn-apply w-full mt-2 h-[56px] text-[18px]"
+                  href={contractDocHref(partner.docToken, "view")}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  계약서 보기
+                </a>
+              ) : (
+                <p className="mt-2 text-sm text-[var(--sub)]">계약서 파일이 준비되면 여기에서 확인할 수 있습니다.</p>
+              )}
+            </div>
+          ) : !ready ? (
+            <div className="form-card apply-auth-card" aria-busy="true">
+              <p className="apply-auth-lead">로그인 상태를 확인하고 있습니다.</p>
+            </div>
+          ) : !user ? (
+            <div className="form-card apply-auth-card">
+              <p className="apply-auth-lead">
+                코드 발급을 신청하려면 로그인이 필요합니다. 회원이 아니라면 회원가입 후 본인인증으로 이어집니다.
               </p>
-            )}
+              <div className="apply-auth-actions">
+                <Link href={APPLY_LOGIN_HREF} className="btn-apply">
+                  로그인
+                </Link>
+                <Link href={APPLY_SIGNUP_HREF} className="apply-auth-signup">
+                  회원가입
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form className="form-card" onSubmit={onSubmit}>
             <div className="form-grid">
               <div>
                 <label htmlFor="name">
@@ -178,7 +224,8 @@ export default function ApplyForm() {
             <button type="submit" className="btn-apply w-full mt-7 h-[56px] text-[18px]" disabled={!ready || pending}>
               {pending ? "이동 중..." : "리워드 2배 받고 신청하기"}
             </button>
-          </form>
+            </form>
+          )}
         </Reveal>
       </div>
     </section>

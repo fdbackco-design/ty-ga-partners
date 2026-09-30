@@ -1,6 +1,7 @@
 import MyPageAccount from "@/components/MyPageAccount";
 import { memberWithdrawBlocked } from "@/lib/memberWithdraw";
 import { requireMemberUser } from "@/lib/partnerAccess";
+import { memberPartnerSummary } from "@/lib/partnerApplication";
 import { getApplicationByUserId, phoneChangeLocked } from "@/lib/partnerApplicationsStore";
 import { listPhoneHistory } from "@/lib/usersStore";
 
@@ -27,7 +28,7 @@ export default async function MyPage() {
           TY 1인 GA 파트너스
         </p>
         <h1 className="text-center text-[36px] md:text-[44px] font-extrabold tracking-[-0.04em] mt-3">마이페이지</h1>
-        <p className="mt-3 text-center text-[var(--sub)]">가입 정보와 비밀번호를 관리할 수 있습니다.</p>
+        <p className="mt-3 text-center text-[var(--sub)]">변경할 항목을 선택한 뒤 정보를 관리할 수 있습니다.</p>
         {historyError ? <p className="mt-4 text-center text-sm text-[#dc3545]">{historyError}</p> : null}
         <div className="mt-10">
           <MyPageAccount
@@ -36,6 +37,7 @@ export default async function MyPage() {
             phone={user.phone}
             phoneLocked={phoneChangeLocked(application)}
             withdrawLocked={memberWithdrawBlocked(application)}
+            partner={memberPartnerSummary(application, user.username)}
             phoneHistory={phoneHistory}
           />
         </div>

@@ -11,7 +11,7 @@ describe("validateChannelInput", () => {
     expect(validateChannelInput({ name: " 입소문 파트너스 ", slug: "channel2" })).toEqual({
       name: "입소문 파트너스",
       slug: "channel2",
-      orgCode: "611361",
+      orgCode: "611441",
     });
     expect(validateChannelInput({ name: "입소문", slug: "channel2", orgCode: " 123456 " })).toEqual({
       name: "입소문",

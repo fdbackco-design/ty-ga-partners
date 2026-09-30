@@ -3,6 +3,7 @@ import {
   issueIdempotencyKey,
   validateIssueFields,
 } from "@/lib/issue/payload";
+import { classifyIssueFail, issueFailCopy, TY_ISSUE_CODE } from "@/lib/issue/failReason";
 import { classifyTyOutcome, type TyCallResult } from "@/lib/issue/tyResponse";
 import { notifyAdminAlert } from "@/lib/server/adminAlert";
 import { registerEmployee } from "@/lib/server/ty-api";
@@ -78,6 +79,27 @@ export async function runEmployeeIssue(input: {
   }
 
   const issuedSameId = await getIssuedApplicationByEmpId(user.username);
+  if (issuedSameId && issuedSameId.id !== application.id) {
+    const saved = await patchApplication(application.id, {
+      status: "FAILED",
+      last_error_code: TY_ISSUE_CODE.alreadyIssued,
+      last_error_message: "이미 코드가 발급된 아이디입니다.",
+    });
+    await writeAuditLog({
+      applicationId: application.id,
+      userId: user.id,
+      event: "EMP_FAILED",
+      meta: { code: TY_ISSUE_CODE.alreadyIssued, message: "이미 코드가 발급된 아이디입니다." },
+      ip: actor.ip,
+      userAgent: actor.userAgent,
+    });
+    return {
+      ok: false,
+      http: 400,
+      error: issueFailCopy("already_issued").title,
+      status: saved.status,
+    };
+  }
   const empSsn1 = (application.certBirthdate || "").slice(2) || user.rrnFront;
   let empSsn2 = "";
   try {
@@ -90,7 +112,7 @@ export async function runEmployeeIssue(input: {
     empId: user.username,
     empSsn1,
     empSsn2,
-    issuedEmpIdTaken: Boolean(issuedSameId && issuedSameId.id !== application.id),
+    issuedEmpIdTaken: false,
   });
   if (!validated.ok) {
     return { ok: false, http: 400, error: validated.error, status: application.status };
@@ -201,7 +223,7 @@ export async function runEmployeeIssue(input: {
     return {
       ok: false,
       http: 400,
-      error: "정보가 일치하지 않아 발급에 실패했습니다",
+      error: issueFailCopy(classifyIssueFail({ code: outcome.code, message: outcome.message })).title,
       status: "FAILED",
     };
   }

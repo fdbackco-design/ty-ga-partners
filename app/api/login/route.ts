@@ -14,6 +14,7 @@ import {
   memberSessionFromUser,
 } from "@/lib/member";
 import { authenticateUser, toProfile } from "@/lib/usersStore";
+import { loadMemberPartner } from "@/lib/memberPartner";
 
 export const runtime = "nodejs";
 
@@ -51,7 +52,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "아이디 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
     }
     const profile = toProfile(user);
-    const res = NextResponse.json({ ok: true, admin: false, user: profile });
+    const partner = await loadMemberPartner(user.id, user.username);
+    const res = NextResponse.json({ ok: true, admin: false, user: profile, partner });
     res.cookies.set(MEMBER_COOKIE, createMemberToken(memberSessionFromUser(user)), memberCookieOptions());
     res.cookies.set(ADMIN_COOKIE, "", clearCookie(cookieOptions()));
     return res;

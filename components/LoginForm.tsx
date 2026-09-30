@@ -48,6 +48,17 @@ export default function LoginForm() {
       <button type="submit" className="btn-apply w-full mt-7 h-[56px] text-[18px]" disabled={pending}>
         {pending ? "로그인 중..." : "로그인"}
       </button>
+      <p className="auth-recover-links">
+        <Link href="/login/find-id" className="auth-inline-link">
+          아이디 찾기
+        </Link>
+        <span className="sep" aria-hidden="true">
+          |
+        </span>
+        <Link href="/login/find-password" className="auth-inline-link">
+          비밀번호 찾기
+        </Link>
+      </p>
       <p className="mt-5 text-center text-sm text-[var(--sub)]">
         아직 회원이 아니신가요?{" "}
         <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className="auth-inline-link">

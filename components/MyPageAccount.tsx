@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, KeyboardEvent, useId, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly, formatPhoneDisplay } from "@/lib/auth";
 import { formatKstDateTime } from "@/lib/formatDate";
+import { contractDocHref, type MemberPartnerSummary } from "@/lib/partnerApplication";
 import type { PhoneHistoryItem } from "@/lib/usersStore";
+import SystemLoginGuide from "@/components/SystemLoginGuide";
+import HqChangeGuide from "@/components/HqChangeGuide";
 
 type AccountUser = {
   username: string;
@@ -13,12 +16,21 @@ type AccountUser = {
   phone: string;
 };
 
+const TABS = [
+  { id: "phone", label: "휴대폰 번호 변경" },
+  { id: "password", label: "비밀번호 변경" },
+  { id: "withdraw", label: "회원탈퇴" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
 export default function MyPageAccount({
   username,
   name,
   phone,
   phoneLocked,
   withdrawLocked,
+  partner,
   phoneHistory,
 }: {
   username: string;
@@ -26,9 +38,12 @@ export default function MyPageAccount({
   phone: string;
   phoneLocked: boolean;
   withdrawLocked: boolean;
+  partner: MemberPartnerSummary;
   phoneHistory: PhoneHistoryItem[];
 }) {
   const { logout, refreshMember } = useAuth();
+  const tabPrefix = useId();
+  const [tab, setTab] = useState<TabId>("phone");
   const [currentPhone, setCurrentPhone] = useState(phone);
   const [history, setHistory] = useState(phoneHistory);
   const [locked, setLocked] = useState(phoneLocked);
@@ -142,9 +157,79 @@ export default function MyPageAccount({
     }
   }
 
+  function onTabKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    const index = TABS.findIndex((item) => item.id === tab);
+    if (index < 0) return;
+    let next = index;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (index + 1) % TABS.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (index - 1 + TABS.length) % TABS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = TABS.length - 1;
+    else return;
+    e.preventDefault();
+    setTab(TABS[next].id);
+    document.getElementById(`${tabPrefix}-${TABS[next].id}`)?.focus();
+  }
+
   return (
     <div className="mypage-stack">
       <section className="form-card">
+        <h2 className="mypage-section-title">사원 등록</h2>
+        <dl className="partner-apply-id">
+          <div>
+            <dt>신청 상태</dt>
+            <dd>{partner.statusLabel}</dd>
+          </div>
+          <div>
+            <dt>사원코드</dt>
+            <dd>{partner.empCode || "-"}</dd>
+          </div>
+        </dl>
+        {partner.docToken ? (
+          <a className="btn-apply w-full mt-7 h-[56px] text-[18px]" href={contractDocHref(partner.docToken)}>
+            계약서 다운로드
+          </a>
+        ) : (
+          <p className="mt-5 text-sm text-[var(--sub)]">위촉계약이 체결되면 여기에서 계약서를 받을 수 있습니다.</p>
+        )}
+        <HqChangeGuide />
+      </section>
+
+      {partner.issued ? (
+        <section className="form-card">
+          <SystemLoginGuide username={username} plain />
+        </section>
+      ) : null}
+
+      <div className="mypage-tabs" role="tablist" aria-label="마이페이지 메뉴" onKeyDown={onTabKeyDown}>
+        {TABS.map((item) => {
+          const selected = tab === item.id;
+          return (
+            <button
+              key={item.id}
+              id={`${tabPrefix}-${item.id}`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={`${tabPrefix}-panel-${item.id}`}
+              tabIndex={selected ? 0 : -1}
+              className={selected ? "is-on" : ""}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "phone" ? (
+      <form
+        className="form-card"
+        id={`${tabPrefix}-panel-phone`}
+        role="tabpanel"
+        aria-labelledby={`${tabPrefix}-phone`}
+        onSubmit={(e) => void onPhoneSubmit(e)}
+      >
         <h2 className="mypage-section-title">기본 정보</h2>
         <dl className="partner-apply-id">
           <div>
@@ -160,10 +245,7 @@ export default function MyPageAccount({
             <dd>{formatPhoneDisplay(currentPhone)}</dd>
           </div>
         </dl>
-      </section>
-
-      <form className="form-card" onSubmit={(e) => void onPhoneSubmit(e)}>
-        <h2 className="mypage-section-title">휴대폰 번호 변경</h2>
+        <h2 className="mypage-section-title mypage-section-title-follow">휴대폰 번호 변경</h2>
         {locked ? (
           <p className="partner-apply-hint">사원코드가 발급된 뒤에는 휴대폰 번호를 바꿀 수 없습니다.</p>
         ) : (
@@ -205,8 +287,16 @@ export default function MyPageAccount({
           </div>
         ) : null}
       </form>
+      ) : null}
 
-      <form className="form-card" onSubmit={(e) => void onPasswordSubmit(e)}>
+      {tab === "password" ? (
+      <form
+        className="form-card"
+        id={`${tabPrefix}-panel-password`}
+        role="tabpanel"
+        aria-labelledby={`${tabPrefix}-password`}
+        onSubmit={(e) => void onPasswordSubmit(e)}
+      >
         <h2 className="mypage-section-title">비밀번호 변경</h2>
         <div className="form-grid mt-5">
           <div className="span-2">
@@ -247,8 +337,16 @@ export default function MyPageAccount({
           {passwordPending ? "변경 중..." : "비밀번호 변경"}
         </button>
       </form>
+      ) : null}
 
-      <form className="form-card mypage-withdraw" onSubmit={(e) => void onWithdrawSubmit(e)}>
+      {tab === "withdraw" ? (
+      <form
+        className="form-card mypage-withdraw"
+        id={`${tabPrefix}-panel-withdraw`}
+        role="tabpanel"
+        aria-labelledby={`${tabPrefix}-withdraw`}
+        onSubmit={(e) => void onWithdrawSubmit(e)}
+      >
         <h2 className="mypage-section-title">회원탈퇴</h2>
         {withdrawLocked ? (
           <>
@@ -297,6 +395,7 @@ export default function MyPageAccount({
           </>
         )}
       </form>
+      ) : null}
     </div>
   );
 }

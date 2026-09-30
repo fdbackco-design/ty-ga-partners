@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { getMemberFromCookies } from "@/lib/member";
+import { loadMemberPartner } from "@/lib/memberPartner";
 import { findUserByUsername, toProfile } from "@/lib/usersStore";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   const session = await getMemberFromCookies();
-  if (!session) return NextResponse.json({ user: null });
+  if (!session) return NextResponse.json({ user: null, partner: null });
   try {
     const user = await findUserByUsername(session.username);
-    if (!user) return NextResponse.json({ user: null });
-    return NextResponse.json({ user: toProfile(user) });
+    if (!user) return NextResponse.json({ user: null, partner: null });
+    const partner = await loadMemberPartner(user.id, user.username);
+    return NextResponse.json({ user: toProfile(user), partner });
   } catch (error) {
     const message = error instanceof Error ? error.message : "회원 정보를 불러오지 못했습니다.";
     const status = message.includes("Supabase가 설정되지 않았습니다") ? 503 : 500;
