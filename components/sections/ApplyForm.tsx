@@ -112,7 +112,9 @@ export default function ApplyForm() {
           ) : !user ? (
             <div className="form-card apply-auth-card">
               <p className="apply-auth-lead">
-                코드 발급을 신청하려면 로그인이 필요합니다. 회원이 아니라면 회원가입 후 본인인증으로 이어집니다.
+                코드 발급을 신청하려면 로그인이 필요합니다. 
+                <br />
+                회원이 아니라면 회원가입 후 본인인증으로 이어집니다.
               </p>
               <div className="apply-auth-actions">
                 <Link href={APPLY_LOGIN_HREF} className="btn-apply">
