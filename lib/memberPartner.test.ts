@@ -25,6 +25,7 @@ describe("memberPartnerSummary", () => {
     expect(summary.empCode).toBe("TYS260101001");
     expect(summary.docToken).toHaveLength(32);
     expect(contractDocHref(summary.docToken || "", "view")).toContain("?view=1");
+    expect(contractDocHref(summary.docToken || "")).not.toContain("key=");
   });
 
   it("발급 전이면 사원코드를 숨긴다", () => {

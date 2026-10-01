@@ -41,6 +41,29 @@ export default function SideQuick() {
         <span className="font-serif text-[22px] leading-none">TY</span>
         <span className="text-[11px] font-serif">TY Life</span>
       </a>
+      <a
+        href="https://docs.google.com/forms/d/e/1FAIpQLSeCveLz994GyUkE-jKLnCGqt605t5cf-LCgsApbqRzkqw22TA/viewform"
+        target="_blank"
+        rel="noreferrer"
+        className="bg-white text-[#555] border-t border-[#eee]"
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <ellipse cx="10" cy="5" rx="5.5" ry="2.5" stroke="currentColor" strokeWidth="1.7" />
+          <path
+            d="M4.5 5v8c0 1.4 2.5 2.5 5.5 2.5.7 0 1.4-.1 2-.2M15.5 5v5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <path
+            d="M4.5 9c0 1.4 2.5 2.5 5.5 2.5 2 0 3.8-.5 4.7-1.2M15 15.5h5.5M17.8 12.8v5.5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="mt-1">DB구매문의</span>
+      </a>
     </aside>
   );
 }
