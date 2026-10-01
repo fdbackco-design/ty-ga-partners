@@ -80,6 +80,8 @@ export default function ResourceForm() {
   const [storage, setStorage] = useState<"blob" | "local" | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [categories, setCategories] = useState<ResourceCategory[]>([]);
+  const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
+  const [showAllCategories, setShowAllCategories] = useState(true);
   const [category, setCategory] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [error, setError] = useState("");
@@ -102,8 +104,11 @@ export default function ResourceForm() {
       });
     void fetch("/api/resources/categories", { cache: "no-store" })
       .then((res) => res.json())
-      .then((data: { items?: ResourceCategory[] }) => {
-        setCategories(data.items || []);
+      .then((data: { items?: ResourceCategory[]; order?: string[]; showAll?: boolean }) => {
+        const items = data.items || [];
+        setCategories(items);
+        setShowAllCategories(data.showAll !== false);
+        setCategoryOrder(data.order || [...(data.showAll === false ? [] : ["all"]), ...items.map((item) => item.id)]);
       });
   }, [isAdmin]);
 
@@ -118,9 +123,17 @@ export default function ResourceForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      const json = (await res.json()) as { error?: string; item?: ResourceCategory; items?: ResourceCategory[] };
+      const json = (await res.json()) as {
+        error?: string;
+        item?: ResourceCategory;
+        items?: ResourceCategory[];
+        order?: string[];
+        showAll?: boolean;
+      };
       if (!res.ok || !json.item) throw new Error(json.error || "분류를 추가하지 못했습니다.");
       setCategories(json.items || []);
+      setCategoryOrder(json.order || []);
+      setShowAllCategories(json.showAll !== false);
       setCategory(json.item.name);
       setNewCategory("");
     } catch (err) {
@@ -131,16 +144,58 @@ export default function ResourceForm() {
   }
 
   async function onDeleteCategory(id: string) {
-    if (!confirm("이 분류를 삭제할까요? 이미 등록된 자료의 분류 이름은 그대로 남습니다.")) return;
+    const message =
+      id === "all"
+        ? "「전체」 탭을 삭제할까요? 자료실에 들어오면 첫 번째 분류 탭이 선택됩니다."
+        : "이 분류를 삭제할까요? 이미 등록된 자료의 분류 이름은 그대로 남습니다.";
+    if (!confirm(message)) return;
     setError("");
     const res = await fetch(`/api/resources/categories/${id}`, { method: "DELETE" });
-    const json = (await res.json()) as { error?: string; items?: ResourceCategory[] };
+    const json = (await res.json()) as {
+      error?: string;
+      items?: ResourceCategory[];
+      order?: string[];
+      showAll?: boolean;
+    };
     if (!res.ok) {
       setError(json.error || "분류를 삭제하지 못했습니다.");
       return;
     }
     setCategories(json.items || []);
+    setCategoryOrder(json.order || []);
+    setShowAllCategories(json.showAll !== false);
     if (category && !json.items?.some((item) => item.name === category)) setCategory("");
+  }
+
+  async function onMoveCategory(id: string, direction: -1 | 1) {
+    const index = categoryOrder.indexOf(id);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= categoryOrder.length || categoryPending) return;
+    const ids = [...categoryOrder];
+    [ids[index], ids[nextIndex]] = [ids[nextIndex], ids[index]];
+    setCategoryPending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/resources/categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const json = (await res.json()) as {
+        error?: string;
+        items?: ResourceCategory[];
+        order?: string[];
+        showAll?: boolean;
+      };
+      if (!res.ok) throw new Error(json.error || "분류 순서를 변경하지 못했습니다.");
+      setCategories(json.items || []);
+      setCategoryOrder(json.order || ids);
+      setShowAllCategories(json.showAll !== false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "분류 순서를 변경하지 못했습니다.");
+    } finally {
+      setCategoryPending(false);
+    }
   }
 
   async function ensureStorage() {
@@ -329,16 +384,40 @@ export default function ResourceForm() {
                   {categoryPending ? "추가 중..." : "분류 추가"}
                 </button>
               </div>
-              {categories.length ? (
+              {categoryOrder.length ? (
                 <ul>
-                  {categories.map((item) => (
-                    <li key={item.id}>
-                      <span>{item.name}</span>
-                      <button type="button" onClick={() => void onDeleteCategory(item.id)}>
-                        삭제
-                      </button>
-                    </li>
-                  ))}
+                  {categoryOrder.map((id, index) => {
+                    const item = id === "all" && showAllCategories
+                      ? { id: "all", name: "전체" }
+                      : categories.find((row) => row.id === id);
+                    if (!item) return null;
+                    return (
+                      <li key={item.id}>
+                        <span>{item.name}</span>
+                        <span className="resource-category-order-actions">
+                          <button
+                            type="button"
+                            aria-label={`${item.name} 위로 이동`}
+                            disabled={categoryPending || index === 0}
+                            onClick={() => void onMoveCategory(item.id, -1)}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`${item.name} 아래로 이동`}
+                            disabled={categoryPending || index === categoryOrder.length - 1}
+                            onClick={() => void onMoveCategory(item.id, 1)}
+                          >
+                            ↓
+                          </button>
+                          <button type="button" disabled={categoryPending} onClick={() => void onDeleteCategory(item.id)}>
+                            삭제
+                          </button>
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <span className="resource-category-empty">등록된 분류가 없습니다. 추가하면 위에서 선택할 수 있습니다.</span>

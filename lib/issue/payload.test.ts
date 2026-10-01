@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditableEmployeePayload, validateIssueFields, type EmployeePayload } from "./payload";
+import { auditableEmployeePayload, buildDocUrl, validateIssueFields, type EmployeePayload } from "./payload";
 import type { PartnerApplication } from "@/lib/partnerApplication";
 
 const application = {
@@ -7,7 +7,7 @@ const application = {
   userId: "user",
   status: "CONTRACT_SIGNED",
   channelSlug: "default",
-  orgCode: "611361",
+  orgCode: "611441",
   joinChannel: "GA파트너스",
   certName: "이명진",
   certBirthdate: "19990311",
@@ -77,7 +77,7 @@ describe("validateIssueFields", () => {
     expect(result.payload.empSsn2).not.toContain("-");
     expect(result.payload.empMobile).toBe("01051095537");
     expect(result.payload.orgCode).toBe("611441");
-    expect(result.payload.docURL).toMatch(/^https?:\/\/.+\/api\/partners\/doc\/[a-f0-9]{32}$/);
+    expect(result.payload.docURL).toMatch(/^https?:\/\/.+\/api\/partners\/doc\/[a-f0-9]{32}(\?key=[0-9a-f]+)?$/);
   });
 
   it("뒷자리가 없으면 실패한다", () => {
@@ -148,5 +148,17 @@ describe("validateIssueFields", () => {
     expect(auditableEmployeePayload(payload).empMobile).toBe("010-****-5537");
     expect(auditableEmployeePayload(payload).empName).toBe("이명진");
     expect(auditableEmployeePayload(payload).empId).toBe("myungjin");
+  });
+});
+
+describe("buildDocUrl", () => {
+  it("전산 조회용 key를 붙이고 화면 링크 형식은 유지한다", () => {
+    const prev = process.env.PARTNER_DOC_SYSTEM_KEY;
+    process.env.PARTNER_DOC_SYSTEM_KEY = "test-doc-secret";
+    const token = "a".repeat(32);
+    const url = buildDocUrl(token);
+    expect(url).toContain(`/api/partners/doc/${token}?key=`);
+    expect(url).toMatch(/[?&]key=[0-9a-f]{64}$/);
+    process.env.PARTNER_DOC_SYSTEM_KEY = prev;
   });
 });

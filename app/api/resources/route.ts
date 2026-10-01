@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminFromCookies } from "@/lib/admin";
 import { getResourceAccess } from "@/lib/resourceAccess";
-import { getResourceCategories } from "@/lib/resourceCategoriesStore";
+import { getResourceCategoryState } from "@/lib/resourceCategoriesStore";
 import {
   MAX_FILE_BYTES,
   MAX_RESOURCE_FILES,
@@ -42,10 +42,12 @@ export async function GET() {
   if (!access.canView) {
     return NextResponse.json({ items: [], categories: [], loginRequired: true, canDownload: false });
   }
-  const [items, categories] = await Promise.all([getResources(), getResourceCategories()]);
+  const [items, categoryState] = await Promise.all([getResources(), getResourceCategoryState()]);
   return NextResponse.json({
     items: items.map((item) => publicResource(item, access.canDownload)),
-    categories,
+    categories: categoryState.items,
+    categoryOrder: categoryState.order,
+    showAllCategories: categoryState.showAll,
     loginRequired: false,
     canDownload: access.canDownload,
   });

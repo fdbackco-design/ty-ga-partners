@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminFromCookies } from "@/lib/admin";
-import { getResourceCategories, removeResourceCategory } from "@/lib/resourceCategoriesStore";
+import { getResourceCategoryState, removeResourceCategory } from "@/lib/resourceCategoriesStore";
 
 export const runtime = "nodejs";
 
@@ -14,5 +14,5 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const item = await removeResourceCategory(id);
   if (!item) return NextResponse.json({ error: "분류를 찾을 수 없습니다." }, { status: 404 });
-  return NextResponse.json({ ok: true, items: await getResourceCategories() });
+  return NextResponse.json({ ok: true, ...(await getResourceCategoryState()) });
 }

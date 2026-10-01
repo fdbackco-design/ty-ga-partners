@@ -2,7 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { UserProfile } from "@/lib/auth";
 import { digitsOnly } from "@/lib/auth";
 import { normalizeName } from "@/lib/partnerCert";
-import { SIGNUP_DUPLICATE_MESSAGE, sameNameAndBirthdate } from "@/lib/signupIdentity";
+import { sameNameAndBirthdate, signupDuplicateMessage } from "@/lib/signupIdentity";
 import { getSupabaseAdmin, type UserRow } from "@/lib/supabase";
 
 export type StoredUser = UserProfile & {
@@ -131,7 +131,7 @@ export async function createUser(input: {
     rrnBackFirst: input.rrnBackFirst,
   });
   if (samePerson.length) {
-    throw new Error(SIGNUP_DUPLICATE_MESSAGE);
+    throw new Error(signupDuplicateMessage(samePerson[0]?.username));
   }
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase

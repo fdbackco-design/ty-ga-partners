@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   fileKindLabel,
@@ -15,6 +15,8 @@ export default function ResourcesBoard() {
   const { ready, isAdmin, user } = useAuth();
   const [items, setItems] = useState<ResourcePost[]>([]);
   const [categories, setCategories] = useState<ResourceCategory[]>([]);
+  const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
+  const [showAllCategories, setShowAllCategories] = useState(true);
   const [canDownload, setCanDownload] = useState(false);
   const [loginRequired, setLoginRequired] = useState(false);
   const [error, setError] = useState("");
@@ -22,27 +24,47 @@ export default function ResourcesBoard() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
 
-  async function load() {
+  const fetchResources = useCallback(async () => {
     const res = await fetch("/api/resources", { cache: "no-store" });
-    const data = (await res.json()) as {
+    return (await res.json()) as {
       items?: ResourcePost[];
       categories?: ResourceCategory[];
+      categoryOrder?: string[];
+      showAllCategories?: boolean;
       loginRequired?: boolean;
       canDownload?: boolean;
     };
-    setItems(data.items || []);
-    setCategories(data.categories || []);
+  }, []);
+
+  const applyResources = useCallback((data: Awaited<ReturnType<typeof fetchResources>>) => {
+    const loadedItems = data.items || [];
+    const loadedCategories = data.categories || [];
+    const showAll = data.showAllCategories !== false;
+    const order = data.categoryOrder || [...(showAll ? ["all"] : []), ...loadedCategories.map((item) => item.id)];
+    const categoryById = new Map(loadedCategories.map((item) => [item.id, item.name]));
+    const firstCategory =
+      order.map((id) => categoryById.get(id)).find(Boolean) ||
+      loadedCategories[0]?.name ||
+      loadedItems.find((item) => item.category)?.category ||
+      "";
+    setItems(loadedItems);
+    setCategories(loadedCategories);
+    setCategoryOrder(order);
+    setShowAllCategories(showAll);
+    setCategory(showAll ? "" : firstCategory);
     setLoginRequired(Boolean(data.loginRequired));
     setCanDownload(Boolean(data.canDownload));
     setLoaded(true);
+  }, []);
+
+  async function load() {
+    applyResources(await fetchResources());
   }
 
   useEffect(() => {
     if (!ready) return;
-    setLoaded(false);
-    setItems([]);
-    void load();
-  }, [ready, isAdmin, user?.username]);
+    void fetchResources().then(applyResources);
+  }, [ready, isAdmin, user?.username, fetchResources, applyResources]);
 
   async function onDelete(id: string) {
     if (!confirm("이 자료를 삭제할까요?")) return;
@@ -55,11 +77,34 @@ export default function ResourcesBoard() {
     await load();
   }
 
-  const filterNames = useMemo(() => {
-    const names = new Set(categories.map((item) => item.name));
-    for (const item of items) if (item.category) names.add(item.category);
-    return [...names];
-  }, [categories, items]);
+  const filterTabs = useMemo(() => {
+    const byId = new Map(categories.map((item) => [item.id, item]));
+    const usedNames = new Set<string>();
+    const tabs: { id: string; name: string; value: string }[] = [];
+    for (const id of categoryOrder) {
+      if (id === "all") {
+        if (showAllCategories) tabs.push({ id, name: "전체", value: "" });
+        continue;
+      }
+      const item = byId.get(id);
+      if (!item) continue;
+      tabs.push({ id, name: item.name, value: item.name });
+      usedNames.add(item.name);
+    }
+    for (const item of categories) {
+      if (!usedNames.has(item.name)) {
+        tabs.push({ id: item.id, name: item.name, value: item.name });
+        usedNames.add(item.name);
+      }
+    }
+    for (const item of items) {
+      if (item.category && !usedNames.has(item.category)) {
+        tabs.push({ id: `legacy-${item.category}`, name: item.category, value: item.category });
+        usedNames.add(item.category);
+      }
+    }
+    return tabs;
+  }, [categories, categoryOrder, items, showAllCategories]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -124,19 +169,16 @@ export default function ResourcesBoard() {
         </div>
       </div>
 
-      {filterNames.length ? (
+      {filterTabs.length ? (
         <div className="resource-category-filters" role="tablist" aria-label="자료 분류">
-          <button type="button" className={category ? "" : "is-active"} onClick={() => setCategory("")}>
-            전체
-          </button>
-          {filterNames.map((name) => (
+          {filterTabs.map((tab) => (
             <button
-              key={name}
+              key={tab.id}
               type="button"
-              className={category === name ? "is-active" : ""}
-              onClick={() => setCategory(name)}
+              className={category === tab.value ? "is-active" : ""}
+              onClick={() => setCategory(tab.value)}
             >
-              {name}
+              {tab.name}
             </button>
           ))}
         </div>

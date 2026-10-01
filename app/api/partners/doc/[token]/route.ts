@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApplicationByDocToken, writeAuditLog } from "@/lib/partnerApplicationsStore";
 import { readContractFile } from "@/lib/contract/storage";
+import { authorizePartnerDoc } from "@/lib/partnerDocAuth";
 import { clientIp, clientUserAgent } from "@/lib/requestMeta";
 
 export const runtime = "nodejs";
@@ -21,13 +22,17 @@ export async function GET(request: Request, context: RouteContext) {
   if (!application || !application.docPath || application.docRevoked) {
     return NextResponse.json({ error: "문서를 찾을 수 없습니다." }, { status: 404 });
   }
+  const via = await authorizePartnerDoc(request, application.userId, token);
+  if (!via) {
+    return NextResponse.json({ error: "로그인 후 문서를 확인할 수 있습니다." }, { status: 401 });
+  }
   const bytes = await readContractFile(application.docPath);
   if (!bytes) return NextResponse.json({ error: "문서를 찾을 수 없습니다." }, { status: 404 });
   await writeAuditLog({
     applicationId: application.id,
     userId: application.userId,
     event: "DOC_ACCESS",
-    meta: { tokenPrefix: token.slice(0, 8) },
+    meta: { tokenPrefix: token.slice(0, 8), via },
     ip: clientIp(request),
     userAgent: clientUserAgent(request),
   });

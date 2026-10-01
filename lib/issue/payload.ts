@@ -1,5 +1,6 @@
 import { isValidOrgCode, JOIN_CHANNEL_MAX, normalizeChannelSlug } from "@/config/channels";
 import { isValidSsnChecksum } from "@/lib/contract/validate";
+import { partnerDocSystemQueryKey } from "@/lib/partnerDocAuth";
 import { getAppUrl } from "@/lib/siteUrl";
 import type { PartnerApplication } from "@/lib/partnerApplication";
 import { maskPhone } from "@/lib/partnerCert";
@@ -42,7 +43,9 @@ export function auditableEmployeePayload(payload: EmployeePayload) {
 }
 
 export function buildDocUrl(docToken: string) {
-  return `${getAppUrl()}/api/partners/doc/${docToken}`;
+  const url = `${getAppUrl()}/api/partners/doc/${docToken}`;
+  const key = partnerDocSystemQueryKey(docToken);
+  return key ? `${url}?key=${encodeURIComponent(key)}` : url;
 }
 
 export function validateIssueFields(input: {
