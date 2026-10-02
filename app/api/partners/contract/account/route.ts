@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
   const issuedSameId = await getIssuedApplicationByEmpId(empId);
   if (issuedSameId && issuedSameId.id !== ctx.application.id) {
-    return NextResponse.json({ error: "이미 코드가 발급된 아이디입니다." }, { status: 400 });
+    return NextResponse.json({ error: "TY 전산용 아이디가 중복되었습니다. 수정해주세요." }, { status: 400 });
   }
 
   let empPswdEnc = ctx.application.empPswdEnc;
@@ -52,6 +52,8 @@ export async function POST(request: Request) {
   const saved = await patchApplication(ctx.application.id, {
     emp_id: empId,
     emp_pswd_enc: empPswdEnc,
+    last_error_code: null,
+    last_error_message: null,
   });
   await writeAuditLog({
     applicationId: saved.id,
