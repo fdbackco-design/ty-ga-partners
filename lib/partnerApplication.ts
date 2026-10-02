@@ -261,6 +261,16 @@ export function needsEmpAccountCorrection(application: PartnerApplication) {
   );
 }
 
+/** 관리자: 계약 후 전산 계정 재입력·중복 오류(-7001) 대기는 DB상 CONTRACT_SIGNED여도「작성 중」으로 표시 */
+export function partnerAdminStatusLabel(
+  application: Pick<PartnerApplication, "status" | "signedAt" | "empId" | "empPswdEnc" | "lastErrorCode">,
+) {
+  if (needsEmpAccountCorrection(application as PartnerApplication)) {
+    return partnerStatusLabel("DRAFT");
+  }
+  return partnerStatusLabel(application.status);
+}
+
 export function publicContractDraft(application: PartnerApplication) {
   return {
     status: application.status,
