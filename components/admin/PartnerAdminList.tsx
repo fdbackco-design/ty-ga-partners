@@ -8,6 +8,7 @@ import { PARTNER_STATUSES, partnerStatusLabel } from "@/lib/partnerApplication";
 type Row = {
   id: string;
   status: string;
+  statusLabel: string;
   name: string | null;
   phone: string;
   empId: string;
@@ -126,7 +127,7 @@ export default function PartnerAdminList() {
               rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <Link href={`/admin/partners/${row.id}`}>{partnerStatusLabel(row.status)}</Link>
+                    <Link href={`/admin/partners/${row.id}`}>{row.statusLabel}</Link>
                   </td>
                   <td>{row.name || "-"}</td>
                   <td>{row.phone ? formatPhoneDisplay(row.phone) : "-"}</td>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import PartnerAdminDetail from "@/components/admin/PartnerAdminDetail";
 import { getAdminFromCookies } from "@/lib/admin";
+import { partnerAdminStatusLabel } from "@/lib/partnerApplication";
 import { getApplicationById, listAuditLogs, writeAuditLog } from "@/lib/partnerApplicationsStore";
 import { findUserById } from "@/lib/usersStore";
 
@@ -41,6 +42,7 @@ export default async function AdminPartnerDetailPage({ params }: PageProps) {
               application: {
                 id: application.id,
                 status: application.status,
+                statusLabel: partnerAdminStatusLabel(application),
                 channelSlug: application.channelSlug,
                 orgCode: application.orgCode,
                 orgName: application.orgName,

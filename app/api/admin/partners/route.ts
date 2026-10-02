@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/adminAccess";
+import { partnerAdminStatusLabel } from "@/lib/partnerApplication";
 import { listApplications } from "@/lib/partnerApplicationsStore";
 import { findUsersByIds } from "@/lib/usersStore";
 
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
       return {
         id: item.id,
         status: item.status,
+        statusLabel: partnerAdminStatusLabel(item),
         name: item.certName,
         phone: user?.phone || item.certMobile || "",
         empId: item.empId || user?.username || "",
