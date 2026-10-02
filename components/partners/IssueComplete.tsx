@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EMP_ID_DUPLICATE_MESSAGE, issueFailCopy } from "@/lib/issue/failReason";
 import { formatKstDateTime } from "@/lib/formatDate";
@@ -21,7 +20,6 @@ type IssueResponse = {
 };
 
 export default function IssueComplete({ initial }: { initial: PublicIssueView }) {
-  const router = useRouter();
   const [view, setView] = useState(initial);
   const [modal, setModal] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -78,11 +76,10 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
       latest?.failKind === "emp_id_duplicate"
     ) {
       autoIssueStarted.current = false;
-      router.push("/partners/apply/contract/account");
       return;
     }
     setError(message);
-  }, [refresh, router]);
+  }, [refresh]);
 
   useEffect(() => {
     if (view.status !== "CONTRACT_SIGNED" || !view.hasEmpAccount || autoIssueStarted.current) return;
@@ -90,18 +87,18 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
     void issue();
   }, [view.status, view.hasEmpAccount, issue]);
 
-  useEffect(() => {
-    if (view.failKind === "emp_id_duplicate" || view.accountError) {
-      router.replace("/partners/apply/contract/account");
-    }
-  }, [view.failKind, view.accountError, router]);
+  const needsEmpAccount =
+    (view.status === "CONTRACT_SIGNED" || view.status === "FAILED") &&
+    (!view.hasEmpAccount || Boolean(view.accountError));
 
-  if ((view.status === "CONTRACT_SIGNED" || view.status === "FAILED") && !view.hasEmpAccount) {
+  if (needsEmpAccount) {
     return (
       <div className="issue-panel">
         <ContractAccountForm
+          key={`${view.empId}:${view.accountError || ""}`}
           empId={view.empId}
           hasPassword={false}
+          initialError={view.accountError || ""}
           onSaved={async () => {
             const latest = await refresh();
             if (latest?.hasEmpAccount && latest.status === "CONTRACT_SIGNED") {
@@ -179,13 +176,6 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
 
   if (view.status === "FAILED") {
     const kind = view.failKind || "failed";
-    if (kind === "emp_id_duplicate") {
-      return (
-        <div className="issue-panel">
-          <p className="partner-apply-hint">전산 로그인 정보 입력 화면으로 이동합니다…</p>
-        </div>
-      );
-    }
     const copy = issueFailCopy(kind);
     return (
       <div className="issue-panel">

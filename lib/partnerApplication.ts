@@ -249,6 +249,18 @@ export function isCompleteFlowStatus(status: PartnerApplicationStatus, signedAt?
   return status === "FAILED" && Boolean(signedAt);
 }
 
+/** 코드 발급 단계에서 전산 아이디·비밀번호를 다시 입력해야 할 때 */
+export function needsEmpAccountCorrection(application: PartnerApplication) {
+  if (!application.signedAt || !isCompleteFlowStatus(application.status, application.signedAt)) {
+    return false;
+  }
+  return (
+    !application.empId ||
+    !application.empPswdEnc ||
+    application.lastErrorCode === TY_ISSUE_CODE.empIdDuplicate
+  );
+}
+
 export function publicContractDraft(application: PartnerApplication) {
   return {
     status: application.status,

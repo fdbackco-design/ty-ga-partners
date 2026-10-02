@@ -11,7 +11,11 @@ import {
 } from "@/lib/partnerApplicationsStore";
 import { getVerifySessionFromCookies, VERIFY_COOKIE } from "@/lib/partnerVerifyToken";
 import { findUserByUsername, setUserChannel, type StoredUser } from "@/lib/usersStore";
-import { isCompleteFlowStatus, type PartnerApplication } from "@/lib/partnerApplication";
+import {
+  isCompleteFlowStatus,
+  needsEmpAccountCorrection,
+  type PartnerApplication,
+} from "@/lib/partnerApplication";
 
 export async function getSignedInMemberUser(): Promise<StoredUser | null> {
   const session = await getMemberFromCookies();
@@ -96,7 +100,11 @@ export async function requireContractSession(nextPath: string) {
   const tokenOk = Boolean(verify && verify.userId === user.id && verify.applicationId === application.id);
   if (!tokenOk) redirect("/partners/apply/verify");
   if (isCompleteFlowStatus(application.status, application.signedAt)) {
-    redirect("/partners/apply/complete");
+    const fixingEmpAccount =
+      nextPath.startsWith("/partners/apply/contract/account") && needsEmpAccountCorrection(application);
+    if (!fixingEmpAccount) {
+      redirect("/partners/apply/complete");
+    }
   }
   return { user, application, channel };
 }
