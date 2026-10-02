@@ -540,6 +540,13 @@ input {
   filter: drop-shadow(0 24px 40px rgba(20, 20, 30, 0.12));
 }
 
+@media (min-width: 1024px) {
+  .intro-tablet img {
+    width: 88%;
+    max-width: 440px;
+  }
+}
+
 .p4-row {
   display: flex;
   align-items: stretch;
