@@ -23,6 +23,7 @@ const application = {
   privacyAgreed: true,
   ssnBackEnc: "enc",
   ssnMasked: "990311-2●●●●●●",
+  empPswdEnc: "enc-pswd",
   zipCode: "12345",
   address1: "서울",
   address2: "1층",
@@ -60,8 +61,10 @@ function validate(overrides: Partial<Parameters<typeof validateIssueFields>[0]> 
   return validateIssueFields({
     application,
     empId: "myungjin",
+    empPswd: "secret1",
     empSsn1: "990311",
     empSsn2,
+    accountNo: "1234567890",
     issuedEmpIdTaken: false,
     ...overrides,
   });
@@ -75,9 +78,28 @@ describe("validateIssueFields", () => {
     expect(empSsn2).toHaveLength(7);
     expect(result.payload.empSsn2).toBe("2234561");
     expect(result.payload.empSsn2).not.toContain("-");
+    expect(result.payload.empPswd).toBe("secret1");
+    expect(result.payload.empZip).toBe("12345");
+    expect(result.payload.empAddress).toBe("서울");
+    expect(result.payload.empAddressEtc).toBe("1층");
+    expect(result.payload.bankCode).toBe("004");
+    expect(result.payload.accountNo).toBe("1234567890");
+    expect(result.payload.bankSsn1).toBe("990311");
+    expect(result.payload.bankSsn2).toBe("2000000");
+    expect(result.payload.depositor).toBe("이명진");
     expect(result.payload.empMobile).toBe("01051095537");
     expect(result.payload.orgCode).toBe("611441");
     expect(result.payload.docURL).toMatch(/^https?:\/\/.+\/api\/partners\/doc\/[a-f0-9]{32}(\?key=[0-9a-f]+)?$/);
+  });
+
+  it("전산 비밀번호가 5자면 실패한다", () => {
+    const result = validate({ empPswd: "12345" });
+    expect(result.ok).toBe(false);
+  });
+
+  it("계좌번호가 없으면 실패한다", () => {
+    const result = validate({ accountNo: "" });
+    expect(result.ok).toBe(false);
   });
 
   it("뒷자리가 없으면 실패한다", () => {
@@ -136,15 +158,28 @@ describe("validateIssueFields", () => {
       orgCode: "611441",
       empName: "이명진",
       empId: "myungjin",
+      empPswd: "secret1",
       empSsn1: "990311",
       empSsn2,
       empMobile: "01051095537",
       joinChannel: "GA파트너스",
       docURL: "https://example.com/api/partners/doc/aa",
+      empZip: "12345",
+      empAddress: "서울",
+      empAddressEtc: "1층",
+      bankCode: "004",
+      accountNo: "1234567890",
+      bankSsn1: "990311",
+      bankSsn2: "2000000",
+      depositor: "이명진",
     };
     expect(auditableEmployeePayload(payload).empSsn1).toBe("●●●●●●");
     expect(auditableEmployeePayload(payload).empSsn2).toBe("2●●●●●●");
     expect(auditableEmployeePayload(payload).empSsn2).not.toBe(empSsn2);
+    expect(auditableEmployeePayload(payload).empPswd).toBe("●●●●●●");
+    expect(auditableEmployeePayload(payload).accountNo).toBe("123456-**-*****");
+    expect(auditableEmployeePayload(payload).bankSsn1).toBe("●●●●●●");
+    expect(auditableEmployeePayload(payload).bankSsn2).toBe("2000000");
     expect(auditableEmployeePayload(payload).empMobile).toBe("010-****-5537");
     expect(auditableEmployeePayload(payload).empName).toBe("이명진");
     expect(auditableEmployeePayload(payload).empId).toBe("myungjin");

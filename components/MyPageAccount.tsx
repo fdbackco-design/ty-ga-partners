@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, KeyboardEvent, useId, useState } from "react";
+import { FormEvent, KeyboardEvent, useId, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { digitsOnly, formatPhoneDisplay } from "@/lib/auth";
 import { formatKstDateTime } from "@/lib/formatDate";
@@ -32,6 +32,7 @@ export default function MyPageAccount({
   phoneLocked,
   withdrawLocked,
   partner,
+  systemLogin,
   phoneHistory,
   releases,
 }: {
@@ -41,12 +42,17 @@ export default function MyPageAccount({
   phoneLocked: boolean;
   withdrawLocked: boolean;
   partner: MemberPartnerSummary;
+  systemLogin: { empId: string; empPswd: string } | null;
   phoneHistory: PhoneHistoryItem[];
   releases: ReleaseRequest[];
 }) {
   const { logout, refreshMember } = useAuth();
   const tabPrefix = useId();
-  const [tab, setTab] = useState<TabId>("phone");
+  const accountTabs = useMemo(
+    () => (partner.issued ? TABS.filter((item) => item.id === "password") : [...TABS]),
+    [partner.issued],
+  );
+  const [tab, setTab] = useState<TabId>(() => (partner.issued ? "password" : "phone"));
   const [currentPhone, setCurrentPhone] = useState(phone);
   const [history, setHistory] = useState(phoneHistory);
   const [locked, setLocked] = useState(phoneLocked);
@@ -64,6 +70,14 @@ export default function MyPageAccount({
   const [withdrawAgreed, setWithdrawAgreed] = useState(false);
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawPending, setWithdrawPending] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  async function copyEmpCode() {
+    if (!partner.empCode) return;
+    await navigator.clipboard.writeText(partner.empCode);
+    setCodeCopied(true);
+    window.setTimeout(() => setCodeCopied(false), 1600);
+  }
 
   async function onPhoneSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -152,7 +166,6 @@ export default function MyPageAccount({
         return;
       }
       logout();
-      window.location.assign("/");
     } catch {
       setWithdrawError("회원탈퇴에 실패했습니다.");
     } finally {
@@ -161,77 +174,73 @@ export default function MyPageAccount({
   }
 
   function onTabKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    const index = TABS.findIndex((item) => item.id === tab);
+    const index = accountTabs.findIndex((item) => item.id === tab);
     if (index < 0) return;
     let next = index;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (index + 1) % TABS.length;
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (index - 1 + TABS.length) % TABS.length;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (index + 1) % accountTabs.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (index - 1 + accountTabs.length) % accountTabs.length;
     else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = TABS.length - 1;
+    else if (e.key === "End") next = accountTabs.length - 1;
     else return;
     e.preventDefault();
-    setTab(TABS[next].id);
-    document.getElementById(`${tabPrefix}-${TABS[next].id}`)?.focus();
+    setTab(accountTabs[next].id);
+    document.getElementById(`${tabPrefix}-${accountTabs[next].id}`)?.focus();
   }
 
   return (
     <div className="mypage-stack">
-      <section className="form-card">
-        <h2 className="mypage-section-title">사원 등록</h2>
-        <dl className="partner-apply-id">
-          <div>
-            <dt>신청 상태</dt>
-            <dd>{partner.statusLabel}</dd>
+      {partner.issued ? (
+        <div className="mypage-issued-head">
+          <SystemLoginGuide
+            username={systemLogin?.empId || partner.empId || username}
+            password={systemLogin?.empPswd || undefined}
+            featured
+          />
+          {partner.empCode ? (
+            <div className="issue-emp-code">
+              <span className="issue-emp-code-label">사원코드</span>
+              <span className="issue-emp-code-value">{partner.empCode}</span>
+              <button type="button" className="issue-copy-btn" onClick={() => void copyEmpCode()}>
+                {codeCopied ? "복사됨" : "코드 복사"}
+              </button>
+            </div>
+          ) : null}
+          <div className="mypage-issued-hq-block">
+            <HqChangeGuide />
+            {partner.docToken ? (
+              <a
+                className="btn-apply mypage-contract-download w-full h-[56px] text-[18px]"
+                href={contractDocHref(partner.docToken)}
+              >
+                계약서 다운로드
+              </a>
+            ) : null}
           </div>
-          <div>
-            <dt>사원코드</dt>
-            <dd>{partner.empCode || "-"}</dd>
-          </div>
-        </dl>
-        {partner.docToken ? (
-          <a className="btn-apply w-full mt-7 h-[56px] text-[18px]" href={contractDocHref(partner.docToken)}>
-            계약서 다운로드
-          </a>
-        ) : (
-          <p className="mt-5 text-sm text-[var(--sub)]"></p>
-        )}
-        <HqChangeGuide />
-      </section>
-
-      <section className="form-card">
-        <h2 className="mypage-section-title">해촉 신청</h2>
-        {releases.length === 0 ? (
-          <p className="text-sm text-[var(--sub)]">
-            접수된 해촉 신청이 없습니다.{" "}
-            <Link href="/release-request" className="mypage-withdraw-link">
-              해촉 신청
-            </Link>
-            에서 접수할 수 있습니다.
-          </p>
-        ) : (
-          <ul className="mypage-release-list">
-            {releases.map((item) => (
-              <li key={item.id}>
-                <div>
-                  <strong>{releaseStatusLabel(item.status)}</strong>
-                  <span>{formatPhoneDisplay(item.phone)}</span>
-                </div>
-                <p>{item.memo || "요청 내용 없음"}</p>
-                <time dateTime={item.createdAt}>{formatKstDateTime(item.createdAt)}</time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        </div>
+      ) : null}
 
       {partner.issued ? (
-        <section className="form-card">
-          <SystemLoginGuide username={username} plain />
-        </section>
+        <div className="form-card">
+          <h2 className="mypage-section-title">기본 정보</h2>
+          <dl className="partner-apply-id">
+            <div>
+              <dt>아이디</dt>
+              <dd>{username}</dd>
+            </div>
+            <div>
+              <dt>이름</dt>
+              <dd>{name}</dd>
+            </div>
+            <div>
+              <dt>휴대폰</dt>
+              <dd>{formatPhoneDisplay(currentPhone)}</dd>
+            </div>
+          </dl>
+        </div>
       ) : null}
 
       <div className="mypage-tabs" role="tablist" aria-label="마이페이지 메뉴" onKeyDown={onTabKeyDown}>
-        {TABS.map((item) => {
+        {accountTabs.map((item) => {
           const selected = tab === item.id;
           return (
             <button
@@ -251,7 +260,7 @@ export default function MyPageAccount({
         })}
       </div>
 
-      {tab === "phone" ? (
+      {!partner.issued && tab === "phone" ? (
       <form
         className="form-card"
         id={`${tabPrefix}-panel-phone`}
@@ -368,7 +377,7 @@ export default function MyPageAccount({
       </form>
       ) : null}
 
-      {tab === "withdraw" ? (
+      {!partner.issued && tab === "withdraw" ? (
       <form
         className="form-card mypage-withdraw"
         id={`${tabPrefix}-panel-withdraw`}
@@ -425,6 +434,54 @@ export default function MyPageAccount({
         )}
       </form>
       ) : null}
+
+      {!partner.issued ? (
+        <section className="form-card mypage-partner-section">
+          <h2 className="mypage-section-title">사원 등록</h2>
+          <dl className="partner-apply-id">
+            <div>
+              <dt>신청 상태</dt>
+              <dd>{partner.statusLabel}</dd>
+            </div>
+            <div>
+              <dt>사원코드</dt>
+              <dd>{partner.empCode || "-"}</dd>
+            </div>
+          </dl>
+          {partner.docToken ? (
+            <a className="btn-apply w-full mt-7 h-[56px] text-[18px]" href={contractDocHref(partner.docToken)}>
+              계약서 다운로드
+            </a>
+          ) : null}
+          <HqChangeGuide />
+        </section>
+      ) : null}
+
+      <section className="form-card mypage-partner-section">
+        <h2 className="mypage-section-title">해촉 신청</h2>
+        {releases.length === 0 ? (
+          <p className="text-sm text-[var(--sub)]">
+            접수된 해촉 신청이 없습니다.{" "}
+            <Link href="/release-request" className="mypage-withdraw-link">
+              해촉 신청
+            </Link>
+            에서 접수할 수 있습니다.
+          </p>
+        ) : (
+          <ul className="mypage-release-list">
+            {releases.map((item) => (
+              <li key={item.id}>
+                <div>
+                  <strong>{releaseStatusLabel(item.status)}</strong>
+                  <span>{formatPhoneDisplay(item.phone)}</span>
+                </div>
+                <p>{item.memo || "요청 내용 없음"}</p>
+                <time dateTime={item.createdAt}>{formatKstDateTime(item.createdAt)}</time>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

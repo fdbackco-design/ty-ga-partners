@@ -50,6 +50,14 @@ export default function ContractReview({ draft }: { draft: PublicContractDraft }
             ({draft.zipCode}) {draft.address1} {draft.address2} <Link href="/partners/apply/contract/info">수정</Link>
           </dd>
         </div>
+        {draft.empId ? (
+          <div>
+            <dt>전산 아이디</dt>
+            <dd>
+              {draft.empId} <Link href="/partners/apply/contract/account">수정</Link>
+            </dd>
+          </div>
+        ) : null}
         <div>
           <dt>정산계좌</dt>
           <dd>

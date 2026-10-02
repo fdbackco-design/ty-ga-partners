@@ -41,6 +41,7 @@ export default function SideQuick() {
         <span className="font-serif text-[22px] leading-none">TY</span>
         <span className="text-[11px] font-serif">TY Life</span>
       </a>
+      {/* DB구매문의 — 잠시 비표시
       <a
         href="https://docs.google.com/forms/d/e/1FAIpQLSeCveLz994GyUkE-jKLnCGqt605t5cf-LCgsApbqRzkqw22TA/viewform"
         target="_blank"
@@ -64,6 +65,7 @@ export default function SideQuick() {
         </svg>
         <span className="mt-1">DB구매문의</span>
       </a>
+      */}
     </aside>
   );
 }

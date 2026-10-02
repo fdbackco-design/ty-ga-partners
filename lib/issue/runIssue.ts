@@ -78,7 +78,8 @@ export async function runEmployeeIssue(input: {
     return { ok: false, http: 400, error: "코드 발급을 진행할 수 없는 상태입니다.", status: application.status };
   }
 
-  const issuedSameId = await getIssuedApplicationByEmpId(user.username);
+  const empId = (application.empId || "").trim();
+  const issuedSameId = empId ? await getIssuedApplicationByEmpId(empId) : null;
   if (issuedSameId && issuedSameId.id !== application.id) {
     const saved = await patchApplication(application.id, {
       status: "FAILED",
@@ -102,16 +103,22 @@ export async function runEmployeeIssue(input: {
   }
   const empSsn1 = (application.certBirthdate || "").slice(2) || user.rrnFront;
   let empSsn2 = "";
+  let empPswd = "";
+  let accountNo = "";
   try {
     empSsn2 = application.ssnBackEnc ? decryptSecret(application.ssnBackEnc) : "";
+    empPswd = application.empPswdEnc ? decryptSecret(application.empPswdEnc) : "";
+    accountNo = application.accountNoEnc ? decryptSecret(application.accountNoEnc) : "";
   } catch {
-    return { ok: false, http: 400, error: "주민등록번호 뒷자리를 확인할 수 없습니다.", status: application.status };
+    return { ok: false, http: 400, error: "사원 등록에 필요한 정보를 확인할 수 없습니다.", status: application.status };
   }
   const validated = validateIssueFields({
     application,
-    empId: user.username,
+    empId,
+    empPswd,
     empSsn1,
     empSsn2,
+    accountNo,
     issuedEmpIdTaken: false,
   });
   if (!validated.ok) {
@@ -119,7 +126,7 @@ export async function runEmployeeIssue(input: {
   }
 
   const claimed = await claimSubmitting(application.id, fromStatuses, {
-    empId: user.username,
+    empId,
     idempotencyKey: application.idempotencyKey || issueIdempotencyKey(application.id),
     issueAttempts: (application.issueAttempts || 0) + 1,
   });
@@ -162,7 +169,7 @@ export async function runEmployeeIssue(input: {
       userAgent: actor.userAgent,
     });
     await notifyAdminAlert(
-      `사원코드 발급 수동 확인 필요\n신청 ${application.id}\n이름 ${application.certName || "-"}\n아이디 ${user.username}`,
+      `사원코드 발급 수동 확인 필요\n신청 ${application.id}\n이름 ${application.certName || "-"}\n아이디 ${empId || user.username}`,
     );
     return { ok: false, http: 202, error: "접수되었습니다. 발급 결과를 확인 중이며 곧 안내드립니다", status: saved.status };
   }
@@ -249,7 +256,7 @@ export async function runEmployeeIssue(input: {
     userAgent: actor.userAgent,
   });
   await notifyAdminAlert(
-    `사원코드 발급 수동 확인 필요 (${outcome.reason})\n신청 ${application.id}\n이름 ${application.certName || "-"}\n아이디 ${user.username}`,
+    `사원코드 발급 수동 확인 필요 (${outcome.reason})\n신청 ${application.id}\n이름 ${application.certName || "-"}\n아이디 ${empId || user.username}`,
   );
   return {
     ok: false,

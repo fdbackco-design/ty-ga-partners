@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const ctx = await getContractApiContext();
   if ("error" in ctx) return ctx.error;
   if (!contractStepReady(ctx.application, "bank")) {
-    return NextResponse.json({ error: "인적사항을 먼저 입력해 주세요." }, { status: 400 });
+    return NextResponse.json({ error: "전산 로그인 정보를 먼저 입력해 주세요." }, { status: 400 });
   }
   let raw: unknown;
   try {

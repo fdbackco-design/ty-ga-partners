@@ -9,6 +9,11 @@ export function maskSsn(front6: string, back7: string) {
   return `${front6}-${first}●●●●●●`;
 }
 
+export function maskBankSsn2(back7: string) {
+  const first = String(back7 || "").replace(/\D/g, "").slice(0, 1);
+  return first ? `${first}000000` : "";
+}
+
 export function maskAccount(accountNo: string) {
   const digits = accountNo.replace(/\D/g, "");
   if (digits.length <= 6) return `${digits}-**-*****`;

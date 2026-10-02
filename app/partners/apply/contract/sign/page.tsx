@@ -13,7 +13,7 @@ export default async function ContractSignPage() {
   const { application } = await requireContractSession("/partners/apply/contract/sign");
   if (!contractStepReady(application, "sign")) redirect("/partners/apply/contract/bank");
   return (
-    <PartnerApplyShell step={4} of={4} title="전자서명" backHref="/partners/apply/contract/bank">
+    <PartnerApplyShell step={5} of={5} title="전자서명" backHref="/partners/apply/contract/bank">
       <p className="partner-apply-lead">흰 화면에 서명해 주세요. 확인하면 계약서 3곳에 같은 서명이 들어갑니다.</p>
       <SignaturePad />
     </PartnerApplyShell>

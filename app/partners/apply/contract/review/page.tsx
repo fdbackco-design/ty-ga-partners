@@ -14,7 +14,7 @@ export default async function ContractReviewPage() {
   const { application } = await requireContractSession("/partners/apply/contract/review");
   if (!contractStepReady(application, "review")) redirect("/partners/apply/contract/sign");
   return (
-    <PartnerApplyShell step={4} of={4} title="최종 확인" backHref="/partners/apply/contract/sign">
+    <PartnerApplyShell step={5} of={5} title="최종 확인" backHref="/partners/apply/contract/sign">
       <ContractReview draft={publicContractDraft(application)} />
     </PartnerApplyShell>
   );

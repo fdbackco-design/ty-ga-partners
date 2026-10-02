@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import SignupForm from "@/components/SignupForm";
-import { getMemberFromCookies } from "@/lib/member";
+import { clearStaleMemberSession, getSignedInMemberUser } from "@/lib/partnerAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +10,9 @@ export const metadata = {
 };
 
 export default async function SignupPage() {
-  const member = await getMemberFromCookies();
-  if (member) redirect("/mypage");
+  const user = await getSignedInMemberUser();
+  if (user) redirect("/mypage");
+  await clearStaleMemberSession();
 
   return (
     <main className="auth-page">

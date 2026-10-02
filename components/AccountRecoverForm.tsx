@@ -297,9 +297,6 @@ function AccountRecoverNice({
   return (
     <div className="form-card">
       {showInApp ? <InAppBrowserNotice href={pageHref} /> : null}
-      <p className="text-[15px] leading-[1.6] text-[var(--sub)]">
-        사원 등록과 같은 휴대폰 본인인증으로 가입 정보를 확인합니다.
-      </p>
       {status === "pending" ? <p className="mt-4 text-sm font-bold text-[var(--gold)]">인증창에서 진행해 주세요.</p> : null}
       {status === "blocked" ? (
         <p className="mt-4 text-sm text-[#dc3545]">주소창 오른쪽 팝업 차단 아이콘을 눌러 허용한 뒤 다시 시도해 주세요.</p>

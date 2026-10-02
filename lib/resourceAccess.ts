@@ -1,4 +1,5 @@
 import { getApplicationByUserId, isIssued } from "@/lib/partnerApplicationsStore";
+import { findUserByUsername } from "@/lib/usersStore";
 import { getViewer } from "@/lib/viewer";
 
 export type ResourceAccess = {
@@ -17,7 +18,11 @@ export async function getResourceAccess(): Promise<ResourceAccess> {
     return { loggedIn: true, isAdmin: true, canView: true, canDownload: true };
   }
   try {
-    const application = await getApplicationByUserId(viewer.username);
+    const user = await findUserByUsername(viewer.username);
+    if (!user) {
+      return { loggedIn: true, isAdmin: false, canView: true, canDownload: false };
+    }
+    const application = await getApplicationByUserId(user.id);
     return {
       loggedIn: true,
       isAdmin: false,

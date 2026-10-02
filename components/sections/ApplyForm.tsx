@@ -82,7 +82,7 @@ export default function ApplyForm() {
               <p className="issued-apply-lead">사원코드가 발급되었습니다.</p>
               <dl className="partner-apply-id">
                 <div>
-                  <dt>아이디</dt>
+                  <dt>전산 아이디</dt>
                   <dd>{partner.empId}</dd>
                 </div>
                 <div>
@@ -90,7 +90,7 @@ export default function ApplyForm() {
                   <dd>{partner.empCode || "-"}</dd>
                 </div>
               </dl>
-              <SystemLoginGuide username={partner.empId} />
+              <SystemLoginGuide username={partner.empId} hideLoginDetails />
               <HqChangeGuide />
               {partner.docToken ? (
                 <a

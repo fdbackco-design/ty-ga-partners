@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runEmployeeIssue } from "@/lib/issue/runIssue";
-import { isCompleteFlowStatus, publicIssueView } from "@/lib/partnerApplication";
+import { isCompleteFlowStatus } from "@/lib/partnerApplication";
+import { memberIssueView } from "@/lib/issue/memberView";
 import { getSignedInMemberUser } from "@/lib/partnerAccess";
 import { getApplicationByUserId } from "@/lib/partnerApplicationsStore";
 import { clientIp, clientUserAgent } from "@/lib/requestMeta";
@@ -19,7 +20,7 @@ export async function GET() {
   if (!application || !isCompleteFlowStatus(application.status, application.signedAt)) {
     return NextResponse.json({ error: "계약 체결 후 발급을 진행할 수 있습니다." }, { status: 400 });
   }
-  return NextResponse.json({ issue: publicIssueView(application, user.username, user.rrnFront) });
+  return NextResponse.json({ issue: memberIssueView(application, user.username, user.rrnFront) });
 }
 
 export async function POST(request: Request) {

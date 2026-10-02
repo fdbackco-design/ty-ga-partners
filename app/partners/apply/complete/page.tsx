@@ -2,7 +2,8 @@ import PartnerApplyShell from "@/components/partners/PartnerApplyShell";
 import IssueComplete from "@/components/partners/IssueComplete";
 import { getApplicationByUserId } from "@/lib/partnerApplicationsStore";
 import { requireMemberUser } from "@/lib/partnerAccess";
-import { isCompleteFlowStatus, publicIssueView } from "@/lib/partnerApplication";
+import { isCompleteFlowStatus } from "@/lib/partnerApplication";
+import { memberIssueView } from "@/lib/issue/memberView";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export default async function PartnersCompletePage() {
   }
   return (
     <PartnerApplyShell step={3} title="코드 발급">
-      <IssueComplete initial={publicIssueView(application, user.username, user.rrnFront)} />
+      <IssueComplete initial={memberIssueView(application, user.username, user.rrnFront)} />
     </PartnerApplyShell>
   );
 }

@@ -15,9 +15,26 @@ export function validateUsername(value: string) {
   return "";
 }
 
+/** TY 전산 로그인 아이디 (사원 등록 시 설정) */
+export function validateEmpId(value: string) {
+  const empId = value.trim();
+  if (!empId) return "전산 아이디를 입력해 주세요.";
+  if (!/^[a-z0-9]{6,16}$/.test(empId)) {
+    return "전산 아이디는 영문 소문자 또는 숫자 6~16자로 입력해 주세요.";
+  }
+  return "";
+}
+
 export function validatePassword(value: string) {
   if (!value) return "비밀번호를 입력해 주세요.";
   if (value.length < 8) return "비밀번호는 8자 이상이어야 합니다.";
+  return "";
+}
+
+export function validateEmpPassword(value: string) {
+  if (!value) return "전산 비밀번호를 입력해 주세요.";
+  if (value.length < 6) return "전산 비밀번호는 6자 이상이어야 합니다.";
+  if (value.length > 40) return "전산 비밀번호는 40자 이하로 입력해 주세요.";
   return "";
 }
 

@@ -25,7 +25,10 @@ export default function ReleaseAdminList() {
     void load();
   }, []);
 
-  async function setStatus(id: string, status: ReleaseStatus) {
+  async function setStatus(id: string, status: ReleaseStatus, hasMember: boolean) {
+    if (status === "DONE" && hasMember) {
+      if (!confirm("처리 완료하면 해당 회원 계정이 탈퇴(삭제)됩니다. 계속할까요?")) return;
+    }
     setPending(`${id}-${status}`);
     setError("");
     const res = await fetch(`/api/admin/releases/${id}`, {
@@ -96,7 +99,7 @@ export default function ReleaseAdminList() {
                           type="button"
                           className="inquiry-edit-btn"
                           disabled={pending.startsWith(row.id)}
-                          onClick={() => void setStatus(row.id, "DONE")}
+                          onClick={() => void setStatus(row.id, "DONE", Boolean(row.userId))}
                         >
                           처리완료
                         </button>
@@ -105,7 +108,7 @@ export default function ReleaseAdminList() {
                           type="button"
                           className="inquiry-edit-btn"
                           disabled={pending.startsWith(row.id)}
-                          onClick={() => void setStatus(row.id, "RECEIVED")}
+                          onClick={() => void setStatus(row.id, "RECEIVED", false)}
                         >
                           접수로
                         </button>

@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { buildDefaultResourceCategoryState } from "@/lib/resourceDefaultCategories";
 import { sanitizeCategoryName, type ResourceCategory } from "@/lib/resources";
 import { getBlobJson, putBlobFile } from "@/lib/blobStore";
 
@@ -58,7 +59,11 @@ async function writeBlob(state: ResourceCategoryState) {
 }
 
 async function readAll() {
-  return blobEnabled() ? await readBlob() : await readLocal();
+  const state = blobEnabled() ? await readBlob() : await readLocal();
+  if (state.items.length > 0) return state;
+  const seeded = buildDefaultResourceCategoryState();
+  await writeAll(seeded);
+  return seeded;
 }
 
 async function writeAll(state: ResourceCategoryState) {

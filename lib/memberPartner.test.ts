@@ -19,9 +19,10 @@ describe("memberPartnerSummary", () => {
   });
 
   it("발급 완료면 사원코드와 계약서 토큰을 연다", () => {
-    const summary = memberPartnerSummary(app("ISSUED"), "hong");
+    const summary = memberPartnerSummary(app("ISSUED", { empId: "tylogin" }), "hong");
     expect(summary.issued).toBe(true);
     expect(summary.statusLabel).toBe("발급 완료");
+    expect(summary.empId).toBe("tylogin");
     expect(summary.empCode).toBe("TYS260101001");
     expect(summary.docToken).toHaveLength(32);
     expect(contractDocHref(summary.docToken || "", "view")).toContain("?view=1");
