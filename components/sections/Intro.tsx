@@ -6,7 +6,7 @@ export default function Intro() {
     <section id="GA" className="py-[144px] md:py-[180px] bg-white">
       <div className="wrap grid lg:grid-cols-2 gap-12 items-center">
         <Reveal>
-          <p className="text-[24px] font-extrabold tracking-[-0.04em]">보험 계약으로 연결하는</p>
+          <p className="text-[24px] font-extrabold tracking-[-0.04em]">보험 상담으로 연결하는</p>
           <h2 className="section-title xl mt-3">
             날 위한 N잡
             <br />
@@ -21,7 +21,7 @@ export default function Intro() {
           <ApplyButton className="mt-8">파트너스 신청하기</ApplyButton>
         </Reveal>
         <Reveal delay={120} className="intro-tablet">
-          <img src="/images/intro-tablet.png" alt="TY-GA파트너스 상품으로 보험계약 연결까지 가능!" className="mx-auto" />
+          <img src="/images/intro-tablet.png" alt="TY-GA파트너스 상품으로 보험 상담까지 가능!" className="mx-auto" />
         </Reveal>
       </div>
     </section>

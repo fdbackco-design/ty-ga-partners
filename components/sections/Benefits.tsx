@@ -4,8 +4,8 @@ export default function Benefits() {
   const cards = [
     {
       icon: "/images/benefit-1.png",
-      lines: ["TY상품을 마케팅하면", "보험 계약 체결이", "쉬워집니다"],
-      strong: "보험 계약 체결이",
+      lines: ["TY상품을 마케팅하면", "보험 상담 연결이", "쉬워집니다"],
+      strong: "보험 상담 연결이",
     },
     {
       icon: "/images/benefit-2.png",
