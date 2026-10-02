@@ -1,10 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { formatPhoneDisplay, validatePhone } from "./auth";
+import { formatPhoneDisplay, validateEmpId, validateEmpPassword, validatePhone } from "./auth";
 
 describe("formatPhoneDisplay", () => {
   it("11자리 휴대폰을 하이픈 형식으로 만든다", () => {
     expect(formatPhoneDisplay("01012345678")).toBe("010-1234-5678");
     expect(formatPhoneDisplay("010-1234-5678")).toBe("010-1234-5678");
+  });
+});
+
+describe("validateEmpId", () => {
+  it("영문 소문자·숫자 6~16자만 허용한다", () => {
+    expect(validateEmpId("")).toBe("전산 아이디를 입력해 주세요.");
+    expect(validateEmpId("abc12")).toBe("전산 아이디는 영문 소문자 또는 숫자 6~16자로 입력해 주세요.");
+    expect(validateEmpId("abc123")).toBe("");
+    expect(validateEmpId("myungjin")).toBe("");
+    expect(validateEmpId("ABC123")).toBe("전산 아이디는 영문 소문자 또는 숫자 6~16자로 입력해 주세요.");
+    expect(validateEmpId("user_name")).toBe("전산 아이디는 영문 소문자 또는 숫자 6~16자로 입력해 주세요.");
+    expect(validateEmpId("a".repeat(17))).toBe("전산 아이디는 영문 소문자 또는 숫자 6~16자로 입력해 주세요.");
+  });
+});
+
+describe("validateEmpPassword", () => {
+  it("전산 비밀번호는 6자 이상이다", () => {
+    expect(validateEmpPassword("")).toBe("전산 비밀번호를 입력해 주세요.");
+    expect(validateEmpPassword("12345")).toBe("전산 비밀번호는 6자 이상이어야 합니다.");
+    expect(validateEmpPassword("123456")).toBe("");
   });
 });
 

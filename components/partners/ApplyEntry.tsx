@@ -18,7 +18,7 @@ export default function ApplyEntry({ resume = false, needRecert = false }: { res
         </li>
         <li>
           <strong>계약서 작성</strong>
-          <span>위촉계약서를 읽고 인적사항·계좌를 작성한 뒤 전자서명합니다.</span>
+          <span>위촉계약서를 읽고 인적사항·전산 로그인·계좌를 작성한 뒤 전자서명합니다.</span>
         </li>
         <li>
           <strong>코드 발급</strong>

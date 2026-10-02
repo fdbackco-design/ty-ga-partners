@@ -77,7 +77,7 @@ export default function ContractInfoForm({
     }
     setSsnBack("");
     setSsnLocked(true);
-    router.push("/partners/apply/contract/bank");
+    router.push("/partners/apply/contract/account");
   }
 
   return (

@@ -171,6 +171,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setIsAdmin(false);
     void fetch("/api/admin/logout", { method: "POST" });
     void fetch("/api/member/session", { method: "DELETE" });
+    window.location.assign("/");
   }, []);
 
   const refreshMember = useCallback(async () => {

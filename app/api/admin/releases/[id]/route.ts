@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/adminAccess";
 import { RELEASE_STATUSES, type ReleaseStatus } from "@/lib/releases";
-import { removeRelease, updateReleaseStatus } from "@/lib/releasesStore";
+import { findReleaseById, removeRelease, updateReleaseStatus } from "@/lib/releasesStore";
+import { deleteUserById } from "@/lib/usersStore";
 
 export const runtime = "nodejs";
 
@@ -20,8 +21,23 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   if (!RELEASE_STATUSES.includes(body.status as ReleaseStatus)) {
     return NextResponse.json({ error: "처리할 수 없는 상태입니다." }, { status: 400 });
   }
-  const item = await updateReleaseStatus(id, body.status as ReleaseStatus);
+  const nextStatus = body.status as ReleaseStatus;
+  const before = await findReleaseById(id);
+  if (!before) return NextResponse.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
+
+  const item = await updateReleaseStatus(id, nextStatus);
   if (!item) return NextResponse.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
+
+  if (nextStatus === "DONE" && before.status !== "DONE" && before.userId) {
+    try {
+      await deleteUserById(before.userId);
+    } catch (error) {
+      await updateReleaseStatus(id, before.status);
+      const message = error instanceof Error ? error.message : "회원 탈퇴 처리에 실패했습니다.";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
+
   return NextResponse.json({ item });
 }
 

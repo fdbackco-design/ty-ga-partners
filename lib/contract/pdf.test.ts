@@ -34,6 +34,7 @@ const application = {
   privacyAgreed: true,
   ssnBackEnc: null,
   ssnMasked: "900311-1●●●●●●",
+  empPswdEnc: null,
   zipCode: "12345",
   address1: "서울시 중구",
   address2: "1층",

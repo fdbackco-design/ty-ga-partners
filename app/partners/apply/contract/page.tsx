@@ -11,7 +11,7 @@ export const metadata = {
 export default async function ContractAgreePage() {
   const { application } = await requireContractSession("/partners/apply/contract");
   return (
-    <PartnerApplyShell step={1} of={4} title="계약서 동의" backHref="/partners/apply" className="is-contract-read">
+    <PartnerApplyShell step={1} of={5} title="계약서 동의" backHref="/partners/apply" className="is-contract-read">
       <ContractReader alreadyAgreed={Boolean(application.privacyAgreed)} />
     </PartnerApplyShell>
   );

@@ -220,14 +220,21 @@ export async function setUserPasswordById(userId: string, nextPassword: string) 
   if (error) throw new Error(error.message);
 }
 
+export async function deleteUserById(userId: string) {
+  const user = await findUserById(userId);
+  if (!user) return false;
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("ga_users").delete().eq("id", userId);
+  if (error) throw new Error(error.message);
+  return true;
+}
+
 export async function deleteUser(userId: string, password: string) {
   const user = await findUserById(userId);
   if (!user || !verifyPassword(password, user.passwordHash)) {
     throw new Error("현재 비밀번호가 올바르지 않습니다.");
   }
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("ga_users").delete().eq("id", userId);
-  if (error) throw new Error(error.message);
+  await deleteUserById(userId);
 }
 
 export async function authenticateUser(username: string, password: string) {

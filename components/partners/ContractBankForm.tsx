@@ -20,6 +20,7 @@ export default function ContractBankForm({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [bankQuery, setBankQuery] = useState("");
   const [code, setCode] = useState(bankCode || "");
   const [accountNo, setAccountNo] = useState("");
   const [holderSelf, setHolderSelf] = useState(!accountHolder || accountHolder === name);
@@ -29,6 +30,11 @@ export default function ContractBankForm({
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const bank = useMemo(() => BANKS.find((item) => item.code === code) || null, [code]);
+  const bankChoices = useMemo(() => {
+    const q = bankQuery.trim().toLowerCase();
+    if (!q) return BANKS;
+    return BANKS.filter((item) => item.name.toLowerCase().includes(q) || item.code.includes(q));
+  }, [bankQuery]);
 
   async function onSubmit() {
     setError("");
@@ -62,7 +68,14 @@ export default function ContractBankForm({
       }}
     >
       <div className="contract-form-box">
-        <button type="button" className="contract-bank-trigger" onClick={() => setOpen(true)}>
+        <button
+          type="button"
+          className="contract-bank-trigger"
+          onClick={() => {
+            setBankQuery("");
+            setOpen(true);
+          }}
+        >
           {bank ? bank.name : "은행 선택"}
         </button>
         {bank ? <p className="partner-apply-hint">계좌번호 {bank.hint}</p> : null}
@@ -116,19 +129,30 @@ export default function ContractBankForm({
         <div className="contract-sheet" role="dialog">
           <div className="contract-sheet-inner">
             <p>은행 선택</p>
+            <input
+              type="search"
+              value={bankQuery}
+              placeholder="은행명 또는 코드"
+              onChange={(e) => setBankQuery(e.target.value)}
+              aria-label="은행 검색"
+            />
             <div className="contract-bank-grid">
-              {BANKS.map((item) => (
-                <button
-                  key={item.code}
-                  type="button"
-                  onClick={() => {
-                    setCode(item.code);
-                    setOpen(false);
-                  }}
-                >
-                  {item.name}
-                </button>
-              ))}
+              {bankChoices.length ? (
+                bankChoices.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => {
+                      setCode(item.code);
+                      setOpen(false);
+                    }}
+                  >
+                    {item.name}
+                  </button>
+                ))
+              ) : (
+                <p className="partner-apply-hint">검색 결과가 없습니다.</p>
+              )}
             </div>
             <button type="button" className="contract-ghost" onClick={() => setOpen(false)}>
               닫기

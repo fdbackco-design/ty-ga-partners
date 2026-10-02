@@ -75,6 +75,7 @@ export type PartnerApplication = {
   privacyAgreed: boolean;
   ssnBackEnc: string | null;
   ssnMasked: string | null;
+  empPswdEnc: string | null;
   zipCode: string | null;
   address1: string | null;
   address2: string | null;
@@ -127,6 +128,7 @@ export type PartnerApplicationRow = {
   privacy_agreed: boolean | null;
   ssn_back_enc: string | null;
   ssn_masked: string | null;
+  emp_pswd_enc: string | null;
   zip_code: string | null;
   address1: string | null;
   address2: string | null;
@@ -193,6 +195,7 @@ export function toApplication(row: PartnerApplicationRow): PartnerApplication {
     privacyAgreed: Boolean(row.privacy_agreed),
     ssnBackEnc: row.ssn_back_enc,
     ssnMasked: row.ssn_masked,
+    empPswdEnc: row.emp_pswd_enc ?? null,
     zipCode: row.zip_code,
     address1: row.address1,
     address2: row.address2,
@@ -264,6 +267,8 @@ export function publicContractDraft(application: PartnerApplication) {
     bankName: application.bankName,
     accountNoMasked: application.accountNoMasked,
     accountHolder: application.accountHolder,
+    empId: application.empId,
+    hasEmpPassword: Boolean(application.empPswdEnc),
     bizRegNo: application.bizRegNo,
     hasSignature: Boolean(application.signaturePath),
     signedAt: application.signedAt,
@@ -272,7 +277,12 @@ export function publicContractDraft(application: PartnerApplication) {
 
 export type PublicContractDraft = ReturnType<typeof publicContractDraft>;
 
-export function publicIssueView(application: PartnerApplication, empId: string, ssnFront?: string) {
+export function publicIssueView(
+  application: PartnerApplication,
+  empId: string,
+  ssnFront?: string,
+  empPswd?: string,
+) {
   const issued = application.status === "ISSUED";
   const failKind =
     application.status === "FAILED"
@@ -281,7 +291,9 @@ export function publicIssueView(application: PartnerApplication, empId: string, 
   return {
     status: application.status,
     name: application.certName,
-    empId,
+    empId: application.empId || empId,
+    empPswd: empPswd || "",
+    hasEmpAccount: Boolean(application.empId && application.empPswdEnc),
     empCode: issued ? application.empCode : null,
     orgName: application.orgName || application.joinChannel,
     ssnFront: ssnFront || (application.certBirthdate ? application.certBirthdate.slice(2) : ""),
@@ -312,7 +324,7 @@ export function memberPartnerSummary(
     issued: application?.status === "ISSUED",
     status: application?.status ?? null,
     statusLabel: application ? partnerStatusLabel(application.status) : "미신청",
-    empId: username,
+    empId: application?.empId || username,
     empCode: application?.status === "ISSUED" ? application.empCode : null,
     docToken: token,
   };

@@ -2,7 +2,7 @@ create table if not exists public.ga_channels (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null unique,
-  org_code text not null default '611361',
+  org_code text not null default '611441',
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -13,7 +13,7 @@ create table if not exists public.ga_channels (
 );
 
 insert into public.ga_channels (name, slug, org_code, active)
-values ('TY_GA파트너스 채널1', 'channel1', '611361', true)
+values ('TY_GA파트너스 채널1', 'channel1', '611441', true)
 on conflict (slug) do nothing;
 
 alter table public.ga_channels enable row level security;

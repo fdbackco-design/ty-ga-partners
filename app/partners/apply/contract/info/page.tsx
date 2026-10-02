@@ -13,7 +13,7 @@ export default async function ContractInfoPage() {
   const { application } = await requireContractSession("/partners/apply/contract/info");
   if (!contractStepReady(application, "info")) redirect("/partners/apply/contract");
   return (
-    <PartnerApplyShell step={2} of={4} title="인적사항" backHref="/partners/apply/contract">
+    <PartnerApplyShell step={2} of={5} title="인적사항" backHref="/partners/apply/contract">
       <ContractInfoForm
         name={application.certName || ""}
         phone={application.certMobile || ""}

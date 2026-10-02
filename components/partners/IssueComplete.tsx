@@ -8,6 +8,7 @@ import type { PublicIssueView } from "@/lib/partnerApplication";
 import { COMPANY } from "@/lib/data";
 import SystemLoginGuide from "@/components/SystemLoginGuide";
 import HqChangeGuide from "@/components/HqChangeGuide";
+import ContractAccountForm from "@/components/partners/ContractAccountForm";
 
 type IssueResponse = {
   ok?: boolean;
@@ -72,10 +73,28 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
   }, [refresh]);
 
   useEffect(() => {
-    if (view.status !== "CONTRACT_SIGNED" || autoIssueStarted.current) return;
+    if (view.status !== "CONTRACT_SIGNED" || !view.hasEmpAccount || autoIssueStarted.current) return;
     autoIssueStarted.current = true;
     void issue();
-  }, [view.status, issue]);
+  }, [view.status, view.hasEmpAccount, issue]);
+
+  if ((view.status === "CONTRACT_SIGNED" || view.status === "FAILED") && !view.hasEmpAccount) {
+    return (
+      <div className="issue-panel">
+        <ContractAccountForm
+          empId={view.empId}
+          hasPassword={false}
+          onSaved={async () => {
+            const latest = await refresh();
+            if (latest?.hasEmpAccount && latest.status === "CONTRACT_SIGNED") {
+              autoIssueStarted.current = true;
+              await issue();
+            }
+          }}
+        />
+      </div>
+    );
+  }
 
   async function copyCode() {
     if (!view.empCode) return;
@@ -99,11 +118,15 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
       <div className="issue-done">
         <span className="issue-check" aria-hidden />
         <p className="partner-apply-lead">코드가 발급되었습니다.</p>
-        <p className="issue-code">{view.empCode}</p>
-        <button type="button" className="contract-ghost" onClick={() => void copyCode()}>
-          {copied ? "복사됨" : "코드 복사"}
-        </button>
-        <dl className="partner-apply-id">
+        <SystemLoginGuide username={view.empId} password={view.empPswd} featured />
+        <div className="issue-emp-code">
+          <span className="issue-emp-code-label">사원코드</span>
+          <span className="issue-emp-code-value">{view.empCode}</span>
+          <button type="button" className="issue-copy-btn" onClick={() => void copyCode()}>
+            {copied ? "복사됨" : "코드 복사"}
+          </button>
+        </div>
+        <dl className="issue-done-meta partner-apply-id">
           <div>
             <dt>소속</dt>
             <dd>{view.orgName}</dd>
@@ -113,15 +136,10 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
             <dd>{view.name}</dd>
           </div>
           <div>
-            <dt>아이디</dt>
-            <dd>{view.empId}</dd>
-          </div>
-          <div>
             <dt>발급일시</dt>
             <dd>{formatKstDateTime(view.issuedAt)}</dd>
           </div>
         </dl>
-        <SystemLoginGuide username={view.empId} />
         <HqChangeGuide />
         {view.docToken ? (
           <a className="btn-apply issue-download" href={`/api/partners/doc/${view.docToken}`}>
@@ -236,7 +254,7 @@ function IssueConfirmModal({
             <dd>{view.ssnFront}</dd>
           </div>
           <div>
-            <dt>아이디</dt>
+            <dt>전산 아이디</dt>
             <dd>{view.empId}</dd>
           </div>
           <div>

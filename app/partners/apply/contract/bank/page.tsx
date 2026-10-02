@@ -11,9 +11,9 @@ export const metadata = {
 
 export default async function ContractBankPage() {
   const { application } = await requireContractSession("/partners/apply/contract/bank");
-  if (!contractStepReady(application, "bank")) redirect("/partners/apply/contract/info");
+  if (!contractStepReady(application, "bank")) redirect("/partners/apply/contract/account");
   return (
-    <PartnerApplyShell step={3} of={4} title="정산 계좌" backHref="/partners/apply/contract/info">
+    <PartnerApplyShell step={4} of={5} title="정산 계좌" backHref="/partners/apply/contract/account">
       <ContractBankForm
         name={application.certName || ""}
         bankCode={application.bankCode}

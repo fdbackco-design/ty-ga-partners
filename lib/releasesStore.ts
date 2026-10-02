@@ -84,6 +84,10 @@ export async function getReleasesByUserId(userId: string) {
   return (await getReleases()).filter((item) => item.userId === userId);
 }
 
+export async function findReleaseById(id: string) {
+  return (await readAll()).find((item) => item.id === id) ?? null;
+}
+
 export async function updateReleaseStatus(id: string, status: ReleaseStatus) {
   const items = await readAll();
   const current = items.find((item) => item.id === id);

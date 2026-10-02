@@ -179,7 +179,7 @@ export default function ConsultDetail({
       </article>
 
       <p className="mt-8 text-sm text-[var(--sub)]">
-        {isAdmin ? "이 상담은 접수된 연락처로 답변해 주세요." : "접수하신 전화번호로 답변드리겠습니다."}
+        {isAdmin ? "상담은 접수된 연락처로 답변해 주세요." : "접수하신 전화번호로 답변드리겠습니다."}
       </p>
 
       {item.replies.length > 0 ? (

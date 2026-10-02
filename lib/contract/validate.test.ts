@@ -5,6 +5,7 @@ import {
   isValidBizRegNo,
   isValidSsnChecksum,
   maskAccount,
+  maskBankSsn2,
   maskSsn,
   stubSsnBack,
 } from "./validate";
@@ -20,6 +21,8 @@ describe("formatSsn", () => {
 describe("maskSsn / maskAccount", () => {
   it("주민번호 마스킹", () => {
     expect(maskSsn("990311", "2234567")).toBe("990311-2●●●●●●");
+    expect(maskBankSsn2("2234567")).toBe("2000000");
+    expect(maskBankSsn2("1024111")).toBe("1000000");
   });
   it("계좌 마스킹", () => {
     expect(maskAccount("1234567890123")).toBe("123456-**-*****");

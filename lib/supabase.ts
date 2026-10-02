@@ -87,6 +87,7 @@ type Database = {
           privacy_agreed?: boolean | null;
           ssn_back_enc?: string | null;
           ssn_masked?: string | null;
+          emp_pswd_enc?: string | null;
           zip_code?: string | null;
           address1?: string | null;
           address2?: string | null;

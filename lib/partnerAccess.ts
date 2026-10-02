@@ -2,14 +2,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CHANNEL_COOKIE, type Channel } from "@/config/channels";
 import { resolveActiveChannel, resolveStoredChannel } from "@/lib/channelsStore";
-import { getMemberFromCookies } from "@/lib/member";
+import { MEMBER_COOKIE, getMemberFromCookies } from "@/lib/member";
 import {
   ensureDraftApplication,
   getApplicationByUserId,
   isIssued,
   isVerifiedOrLater,
 } from "@/lib/partnerApplicationsStore";
-import { getVerifySessionFromCookies } from "@/lib/partnerVerifyToken";
+import { getVerifySessionFromCookies, VERIFY_COOKIE } from "@/lib/partnerVerifyToken";
 import { findUserByUsername, setUserChannel, type StoredUser } from "@/lib/usersStore";
 import { isCompleteFlowStatus, type PartnerApplication } from "@/lib/partnerApplication";
 
@@ -19,9 +19,24 @@ export async function getSignedInMemberUser(): Promise<StoredUser | null> {
   return findUserByUsername(session.username);
 }
 
+/** 탈퇴·해촉 등으로 DB 회원이 없는데 로그인 쿠키만 남은 경우 정리 */
+export async function clearStaleMemberSession() {
+  const session = await getMemberFromCookies();
+  if (!session) return false;
+  const user = await findUserByUsername(session.username);
+  if (user) return false;
+  const jar = await cookies();
+  jar.delete(MEMBER_COOKIE);
+  jar.delete(VERIFY_COOKIE);
+  return true;
+}
+
 export async function requireMemberUser(nextPath: string) {
   const user = await getSignedInMemberUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+  if (!user) {
+    await clearStaleMemberSession();
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+  }
   return user;
 }
 
@@ -86,10 +101,17 @@ export async function requireContractSession(nextPath: string) {
   return { user, application, channel };
 }
 
-export function contractStepReady(application: PartnerApplication, step: "info" | "bank" | "sign" | "review") {
+export function contractStepReady(
+  application: PartnerApplication,
+  step: "info" | "account" | "bank" | "sign" | "review",
+) {
   const agreed = Boolean(application.privacyAgreed && application.agreements && application.agreements.length >= 4);
+  const hasInfo = agreed && Boolean(application.ssnMasked);
+  const hasAccount = hasInfo && Boolean(application.empId && application.empPswdEnc);
+  const hasBank = hasAccount && Boolean(application.bankCode);
   if (step === "info") return agreed;
-  if (step === "bank") return agreed && Boolean(application.ssnMasked);
-  if (step === "sign") return agreed && Boolean(application.ssnMasked && application.bankCode);
-  return agreed && Boolean(application.ssnMasked && application.bankCode && application.signaturePath);
+  if (step === "account") return hasInfo;
+  if (step === "bank") return hasAccount;
+  if (step === "sign") return hasBank;
+  return hasBank && Boolean(application.signaturePath);
 }

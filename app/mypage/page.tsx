@@ -1,6 +1,7 @@
 import MyPageAccount from "@/components/MyPageAccount";
 import { memberWithdrawBlocked } from "@/lib/memberWithdraw";
 import { requireMemberUser } from "@/lib/partnerAccess";
+import { memberSystemLogin } from "@/lib/issue/memberView";
 import { memberPartnerSummary } from "@/lib/partnerApplication";
 import { getApplicationByUserId, phoneChangeLocked } from "@/lib/partnerApplicationsStore";
 import { getReleasesByUserId } from "@/lib/releasesStore";
@@ -40,6 +41,7 @@ export default async function MyPage() {
             phoneLocked={phoneChangeLocked(application)}
             withdrawLocked={memberWithdrawBlocked(application)}
             partner={memberPartnerSummary(application, user.username)}
+            systemLogin={memberSystemLogin(application, user.username)}
             phoneHistory={phoneHistory}
             releases={releases}
           />
