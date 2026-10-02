@@ -17,6 +17,18 @@ vi.mock("@/lib/partnerApplicationsStore", () => ({
 import { getViewer } from "@/lib/viewer";
 import { findUserByUsername } from "@/lib/usersStore";
 import { getApplicationByUserId } from "@/lib/partnerApplicationsStore";
+import type { StoredUser } from "@/lib/usersStore";
+
+const mockUser = (overrides: Partial<StoredUser> & Pick<StoredUser, "id" | "username">): StoredUser => ({
+  passwordHash: "hash",
+  name: "테스트",
+  phone: "01012345678",
+  rrnFront: "900101",
+  rrnBackFirst: "1",
+  channel: "",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  ...overrides,
+});
 
 describe("getResourceAccess", () => {
   it("발급 완료 회원은 다운로드·영상 재생이 가능하다", async () => {
@@ -26,18 +38,9 @@ describe("getResourceAccess", () => {
       name: "홍길동",
       phone: "01012345678",
     });
-    vi.mocked(findUserByUsername).mockResolvedValue({
-      id: "user-uuid",
-      username: "partner1",
-      usernameLower: "partner1",
-      passwordHash: "hash",
-      name: "홍길동",
-      phone: "01012345678",
-      rrnFront: "900101",
-      rrnBackFirst: "1",
-      channel: null,
-      createdAt: "2026-01-01T00:00:00.000Z",
-    });
+    vi.mocked(findUserByUsername).mockResolvedValue(
+      mockUser({ id: "user-uuid", username: "partner1", name: "홍길동", phone: "01012345678" }),
+    );
     vi.mocked(getApplicationByUserId).mockResolvedValue({
       status: "ISSUED",
     } as Awaited<ReturnType<typeof getApplicationByUserId>>);
@@ -54,18 +57,9 @@ describe("getResourceAccess", () => {
       name: "김",
       phone: "010",
     });
-    vi.mocked(findUserByUsername).mockResolvedValue({
-      id: "user-2",
-      username: "guest1",
-      usernameLower: "guest1",
-      passwordHash: "hash",
-      name: "김",
-      phone: "010",
-      rrnFront: "900101",
-      rrnBackFirst: "1",
-      channel: null,
-      createdAt: "2026-01-01T00:00:00.000Z",
-    });
+    vi.mocked(findUserByUsername).mockResolvedValue(
+      mockUser({ id: "user-2", username: "guest1", name: "김", phone: "010" }),
+    );
     vi.mocked(getApplicationByUserId).mockResolvedValue({
       status: "CONTRACT_SIGNED",
     } as Awaited<ReturnType<typeof getApplicationByUserId>>);
