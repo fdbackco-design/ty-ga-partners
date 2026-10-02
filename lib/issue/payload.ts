@@ -84,7 +84,7 @@ export function validateIssueFields(input: {
   const empId = input.empId.trim();
   const empIdError = validateEmpId(empId);
   if (empIdError) return { ok: false, error: empIdError };
-  if (issuedEmpIdTaken) return { ok: false, error: "이미 코드가 발급된 아이디입니다." };
+  if (issuedEmpIdTaken) return { ok: false, error: "TY 전산용 아이디가 중복되었습니다. 수정해주세요." };
   const empPswdError = validateEmpPassword(input.empPswd);
   if (empPswdError) return { ok: false, error: empPswdError };
 

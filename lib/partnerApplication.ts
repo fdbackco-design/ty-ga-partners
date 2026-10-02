@@ -1,5 +1,5 @@
 import type { StoredAgreement } from "@/lib/contract/agreements";
-import { classifyIssueFail } from "@/lib/issue/failReason";
+import { classifyIssueFail, EMP_ID_DUPLICATE_MESSAGE, TY_ISSUE_CODE } from "@/lib/issue/failReason";
 
 export const PARTNER_STATUSES = [
   "DRAFT",
@@ -300,7 +300,15 @@ export function publicIssueView(
     issuedAt: application.issuedAt,
     docToken: application.docToken && !application.docRevoked ? application.docToken : null,
     failKind,
-    canRetry: application.status === "FAILED" && Boolean(application.signedAt) && failKind !== "already_issued",
+    accountError:
+      application.lastErrorCode === TY_ISSUE_CODE.empIdDuplicate
+        ? application.lastErrorMessage || EMP_ID_DUPLICATE_MESSAGE
+        : null,
+    canRetry:
+      application.status === "FAILED" &&
+      Boolean(application.signedAt) &&
+      failKind !== "already_issued" &&
+      failKind !== "emp_id_duplicate",
   };
 }
 

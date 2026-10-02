@@ -3,7 +3,12 @@ import {
   issueIdempotencyKey,
   validateIssueFields,
 } from "@/lib/issue/payload";
-import { classifyIssueFail, issueFailCopy, TY_ISSUE_CODE } from "@/lib/issue/failReason";
+import {
+  classifyIssueFail,
+  EMP_ID_DUPLICATE_MESSAGE,
+  issueFailCopy,
+  TY_ISSUE_CODE,
+} from "@/lib/issue/failReason";
 import { classifyTyOutcome, type TyCallResult } from "@/lib/issue/tyResponse";
 import { notifyAdminAlert } from "@/lib/server/adminAlert";
 import { registerEmployee } from "@/lib/server/ty-api";
@@ -31,6 +36,16 @@ export type IssueRunResult =
 
 function channelOrgName(application: PartnerApplication) {
   return application.orgName || application.joinChannel;
+}
+
+async function revertToEmpAccountStep(applicationId: string) {
+  return patchApplication(applicationId, {
+    status: "CONTRACT_SIGNED",
+    emp_id: null,
+    emp_pswd_enc: null,
+    last_error_code: TY_ISSUE_CODE.empIdDuplicate,
+    last_error_message: EMP_ID_DUPLICATE_MESSAGE,
+  });
 }
 
 export async function runEmployeeIssue(input: {
@@ -81,23 +96,19 @@ export async function runEmployeeIssue(input: {
   const empId = (application.empId || "").trim();
   const issuedSameId = empId ? await getIssuedApplicationByEmpId(empId) : null;
   if (issuedSameId && issuedSameId.id !== application.id) {
-    const saved = await patchApplication(application.id, {
-      status: "FAILED",
-      last_error_code: TY_ISSUE_CODE.alreadyIssued,
-      last_error_message: "이미 코드가 발급된 아이디입니다.",
-    });
+    const saved = await revertToEmpAccountStep(application.id);
     await writeAuditLog({
       applicationId: application.id,
       userId: user.id,
       event: "EMP_FAILED",
-      meta: { code: TY_ISSUE_CODE.alreadyIssued, message: "이미 코드가 발급된 아이디입니다." },
+      meta: { code: TY_ISSUE_CODE.empIdDuplicate, message: EMP_ID_DUPLICATE_MESSAGE },
       ip: actor.ip,
       userAgent: actor.userAgent,
     });
     return {
       ok: false,
       http: 400,
-      error: issueFailCopy("already_issued").title,
+      error: EMP_ID_DUPLICATE_MESSAGE,
       status: saved.status,
     };
   }
@@ -214,6 +225,24 @@ export async function runEmployeeIssue(input: {
   }
 
   if (outcome.kind === "invalid") {
+    const failKind = classifyIssueFail({ code: outcome.code, message: outcome.message });
+    if (failKind === "emp_id_duplicate") {
+      const saved = await revertToEmpAccountStep(application.id);
+      await writeAuditLog({
+        applicationId: application.id,
+        userId: user.id,
+        event: "EMP_FAILED",
+        meta: { code: TY_ISSUE_CODE.empIdDuplicate, message: outcome.message, response: outcome.raw },
+        ip: actor.ip,
+        userAgent: actor.userAgent,
+      });
+      return {
+        ok: false,
+        http: 400,
+        error: EMP_ID_DUPLICATE_MESSAGE,
+        status: saved.status,
+      };
+    }
     await patchApplication(application.id, {
       status: "FAILED",
       last_error_code: outcome.code,
@@ -230,7 +259,7 @@ export async function runEmployeeIssue(input: {
     return {
       ok: false,
       http: 400,
-      error: issueFailCopy(classifyIssueFail({ code: outcome.code, message: outcome.message })).title,
+      error: issueFailCopy(failKind).title,
       status: "FAILED",
     };
   }

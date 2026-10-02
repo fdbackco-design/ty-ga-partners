@@ -1,5 +1,6 @@
 import ContractAccountForm from "@/components/partners/ContractAccountForm";
 import PartnerApplyShell from "@/components/partners/PartnerApplyShell";
+import { EMP_ID_DUPLICATE_MESSAGE, TY_ISSUE_CODE } from "@/lib/issue/failReason";
 import { contractStepReady, requireContractSession } from "@/lib/partnerAccess";
 import { redirect } from "next/navigation";
 
@@ -14,7 +15,16 @@ export default async function ContractAccountPage() {
   if (!contractStepReady(application, "account")) redirect("/partners/apply/contract/info");
   return (
     <PartnerApplyShell step={3} of={5} title="전산 로그인" backHref="/partners/apply/contract/info">
-      <ContractAccountForm empId={application.empId || user.username} hasPassword={Boolean(application.empPswdEnc)} />
+      <ContractAccountForm
+        empId={application.empId || user.username}
+        hasPassword={Boolean(application.empPswdEnc)}
+        nextHref={application.signedAt ? "/partners/apply/complete" : "/partners/apply/contract/bank"}
+        initialError={
+          application.lastErrorCode === TY_ISSUE_CODE.empIdDuplicate
+            ? application.lastErrorMessage || EMP_ID_DUPLICATE_MESSAGE
+            : ""
+        }
+      />
     </PartnerApplyShell>
   );
 }

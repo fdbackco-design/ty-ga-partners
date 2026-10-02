@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { classifyIssueFail, issueFailCopy } from "./failReason";
 
 describe("classifyIssueFail", () => {
-  it("이미 발급·중복은 already_issued 이다", () => {
+  it("전산 아이디 중복과 이미 발급·중복을 구분한다", () => {
+    expect(classifyIssueFail({ code: -7001, message: "" })).toBe("emp_id_duplicate");
+    expect(classifyIssueFail({ code: null, message: "이미 코드가 발급된 아이디입니다." })).toBe("emp_id_duplicate");
     expect(classifyIssueFail({ code: -7000, message: "" })).toBe("already_issued");
-    expect(classifyIssueFail({ code: null, message: "이미 코드가 발급된 아이디입니다." })).toBe("already_issued");
     expect(classifyIssueFail({ message: "이미 등록된 사원입니다." })).toBe("already_issued");
   });
 

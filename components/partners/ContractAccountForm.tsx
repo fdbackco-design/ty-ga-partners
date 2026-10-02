@@ -9,18 +9,20 @@ export default function ContractAccountForm({
   hasPassword,
   nextHref = "/partners/apply/contract/bank",
   onSaved,
+  initialError = "",
 }: {
   empId: string;
   hasPassword: boolean;
   nextHref?: string;
   onSaved?: () => void | Promise<void>;
+  initialError?: string;
 }) {
   const router = useRouter();
   const normalizeEmpId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
   const [id, setId] = useState(() => normalizeEmpId(empId));
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [pending, setPending] = useState(false);
 
   async function onSubmit() {

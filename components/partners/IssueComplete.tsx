@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { EMP_ID_DUPLICATE_MESSAGE, issueFailCopy } from "@/lib/issue/failReason";
 import { formatKstDateTime } from "@/lib/formatDate";
-import { issueFailCopy } from "@/lib/issue/failReason";
 import type { PublicIssueView } from "@/lib/partnerApplication";
 import { COMPANY } from "@/lib/data";
 import SystemLoginGuide from "@/components/SystemLoginGuide";
@@ -20,6 +21,7 @@ type IssueResponse = {
 };
 
 export default function IssueComplete({ initial }: { initial: PublicIssueView }) {
+  const router = useRouter();
   const [view, setView] = useState(initial);
   const [modal, setModal] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -69,14 +71,26 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
     if (data.ok || latest?.status === "ISSUED") return;
     if (latest?.status === "NEEDS_MANUAL_CHECK" || data.status === "NEEDS_MANUAL_CHECK") return;
     if (latest?.status === "SUBMITTING" || res.status === 409) return;
-    setError(data.error || "코드 발급에 실패했습니다.");
-  }, [refresh]);
+    const message = data.error || "코드 발급에 실패했습니다.";
+    if (message === EMP_ID_DUPLICATE_MESSAGE || latest?.accountError) {
+      autoIssueStarted.current = false;
+      router.push("/partners/apply/contract/account");
+      return;
+    }
+    setError(message);
+  }, [refresh, router]);
 
   useEffect(() => {
     if (view.status !== "CONTRACT_SIGNED" || !view.hasEmpAccount || autoIssueStarted.current) return;
     autoIssueStarted.current = true;
     void issue();
   }, [view.status, view.hasEmpAccount, issue]);
+
+  useEffect(() => {
+    if (view.failKind === "emp_id_duplicate" || view.accountError) {
+      router.replace("/partners/apply/contract/account");
+    }
+  }, [view.failKind, view.accountError, router]);
 
   if ((view.status === "CONTRACT_SIGNED" || view.status === "FAILED") && !view.hasEmpAccount) {
     return (

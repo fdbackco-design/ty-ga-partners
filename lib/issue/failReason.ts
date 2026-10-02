@@ -1,16 +1,23 @@
-export type IssueFailKind = "already_issued" | "mismatch" | "failed";
+export type IssueFailKind = "already_issued" | "emp_id_duplicate" | "mismatch" | "failed";
+
+export const EMP_ID_DUPLICATE_MESSAGE = "TY 전산용 아이디가 중복되었습니다. 수정해주세요.";
 
 export const TY_ISSUE_CODE = {
   invalid: -1000,
   alreadyIssued: -7000,
+  empIdDuplicate: -7001,
 } as const;
 
+const EMP_ID_DUPLICATE_RE = /코드가\s*발급된\s*아이디|전산\s*(용\s*)?아이디.*중복|TY\s*전산용\s*아이디/i;
 const ALREADY_ISSUED_RE = /이미\s*(코드가\s*)?발급|이미\s*등록|중복\s*(등록|발급)/;
 const MISMATCH_RE = /인자|일치하지|주민등록|휴대폰|성명/;
 
 export function classifyIssueFail(input: { code?: number | null; message?: string | null }): IssueFailKind {
   const code = input.code ?? null;
   const message = String(input.message || "");
+  if (code === TY_ISSUE_CODE.empIdDuplicate || EMP_ID_DUPLICATE_RE.test(message)) {
+    return "emp_id_duplicate";
+  }
   if (code === TY_ISSUE_CODE.alreadyIssued || ALREADY_ISSUED_RE.test(message)) {
     return "already_issued";
   }
@@ -21,6 +28,13 @@ export function classifyIssueFail(input: { code?: number | null; message?: strin
 }
 
 export function issueFailCopy(kind: IssueFailKind) {
+  if (kind === "emp_id_duplicate") {
+    return {
+      title: EMP_ID_DUPLICATE_MESSAGE,
+      hint: "다른 전산 아이디를 입력한 뒤 다시 발급해 주세요.",
+      retry: true,
+    };
+  }
   if (kind === "already_issued") {
     return {
       title: "이미 사원코드가 발급된 분입니다.",
