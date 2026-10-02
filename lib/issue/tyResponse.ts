@@ -1,4 +1,4 @@
-import { TY_ISSUE_CODE } from "@/lib/issue/failReason";
+import { EMP_ID_DUPLICATE_MESSAGE, TY_ISSUE_CODE } from "@/lib/issue/failReason";
 
 export const DRY_RUN_EMP_CODE = "TEST000000001";
 
@@ -97,13 +97,11 @@ export function classifyTyOutcome(result: TyCallResult): TyOutcome {
   }
 
   if (error.code === TY_ISSUE_CODE.alreadyIssued) {
+    const apiMessage = typeof error.message === "string" ? error.message.trim() : "";
     return {
       kind: "invalid",
-      code: TY_ISSUE_CODE.alreadyIssued,
-      message:
-        typeof error.message === "string" && error.message.trim()
-          ? error.message
-          : "이미 사원코드가 발급된 분입니다.",
+      code: TY_ISSUE_CODE.empIdDuplicate,
+      message: apiMessage || EMP_ID_DUPLICATE_MESSAGE,
       raw: result.body,
     };
   }

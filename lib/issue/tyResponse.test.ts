@@ -25,14 +25,14 @@ describe("classifyTyOutcome", () => {
     expect(outcome).toMatchObject({ kind: "issued", empCode: "TYS260901001" });
   });
 
-  it("code -7000 이면 이미 발급된 실패이다", () => {
+  it("code -7000 이면 전산 아이디 중복 등 invalid 로 분류한다", () => {
     const outcome = classifyTyOutcome({
       ok: true,
       status: 200,
       elapsedMs: 12,
       body: { error: { code: -7000, message: "" }, payload: {}, data: {} },
     });
-    expect(outcome).toMatchObject({ kind: "invalid", code: -7000 });
+    expect(outcome).toMatchObject({ kind: "invalid", code: -7001 });
   });
 
   it("code -1000 이면 재시도 가능한 실패이다", () => {

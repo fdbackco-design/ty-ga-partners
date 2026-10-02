@@ -72,7 +72,11 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
     if (latest?.status === "NEEDS_MANUAL_CHECK" || data.status === "NEEDS_MANUAL_CHECK") return;
     if (latest?.status === "SUBMITTING" || res.status === 409) return;
     const message = data.error || "코드 발급에 실패했습니다.";
-    if (message === EMP_ID_DUPLICATE_MESSAGE || latest?.accountError) {
+    if (
+      message === EMP_ID_DUPLICATE_MESSAGE ||
+      latest?.accountError ||
+      latest?.failKind === "emp_id_duplicate"
+    ) {
       autoIssueStarted.current = false;
       router.push("/partners/apply/contract/account");
       return;
@@ -174,7 +178,15 @@ export default function IssueComplete({ initial }: { initial: PublicIssueView })
   }
 
   if (view.status === "FAILED") {
-    const copy = issueFailCopy(view.failKind || "failed");
+    const kind = view.failKind || "failed";
+    if (kind === "emp_id_duplicate") {
+      return (
+        <div className="issue-panel">
+          <p className="partner-apply-hint">전산 로그인 정보 입력 화면으로 이동합니다…</p>
+        </div>
+      );
+    }
+    const copy = issueFailCopy(kind);
     return (
       <div className="issue-panel">
         <p className="partner-apply-alert">{copy.title}</p>

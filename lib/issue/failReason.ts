@@ -8,17 +8,22 @@ export const TY_ISSUE_CODE = {
   empIdDuplicate: -7001,
 } as const;
 
-const EMP_ID_DUPLICATE_RE = /코드가\s*발급된\s*아이디|전산\s*(용\s*)?아이디.*중복|TY\s*전산용\s*아이디/i;
-const ALREADY_ISSUED_RE = /이미\s*(코드가\s*)?발급|이미\s*등록|중복\s*(등록|발급)/;
+const EMP_ID_DUPLICATE_RE =
+  /코드가\s*발급된\s*아이디|전산\s*(용\s*)?아이디.*중복|TY\s*전산용\s*아이디|이미\s*(등록|사용)\s*(된\s*)?(전산\s*)?아이디|아이디.*(중복|이미)|이미\s*사원코드가\s*발급된\s*분/i;
+const ALREADY_ISSUED_RE = /이미\s*등록된\s*사원|중복\s*(등록|발급)/;
 const MISMATCH_RE = /인자|일치하지|주민등록|휴대폰|성명/;
 
 export function classifyIssueFail(input: { code?: number | null; message?: string | null }): IssueFailKind {
   const code = input.code ?? null;
   const message = String(input.message || "");
-  if (code === TY_ISSUE_CODE.empIdDuplicate || EMP_ID_DUPLICATE_RE.test(message)) {
+  if (
+    code === TY_ISSUE_CODE.empIdDuplicate ||
+    code === TY_ISSUE_CODE.alreadyIssued ||
+    EMP_ID_DUPLICATE_RE.test(message)
+  ) {
     return "emp_id_duplicate";
   }
-  if (code === TY_ISSUE_CODE.alreadyIssued || ALREADY_ISSUED_RE.test(message)) {
+  if (ALREADY_ISSUED_RE.test(message)) {
     return "already_issued";
   }
   if (code === TY_ISSUE_CODE.invalid || MISMATCH_RE.test(message)) {
